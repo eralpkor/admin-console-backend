@@ -1,10 +1,5 @@
 const jwt = require("jsonwebtoken");
-require("dowenv").config();
-
-module.exports = {
-  generateToken,
-  checkToken,
-};
+require("dotenv").config();
 
 // generate new token
 const generateToken = (user) => {
@@ -28,13 +23,9 @@ const checkToken = () => {
     token &&
       jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
         if (err) {
-          res
-            .status(401)
-            .json({
-              errors: [
-                { token: "Invalid token, you will need to log back in" },
-              ],
-            });
+          res.status(401).json({
+            errors: [{ token: "Invalid token, you will need to log back in" }],
+          });
         } else {
           req.user = decoded;
 
@@ -47,4 +38,9 @@ const checkToken = () => {
         .status(401)
         .json({ error: "No Token Provided, you will need to Login" });
   };
+};
+
+module.exports = {
+  generateToken,
+  checkToken,
 };
