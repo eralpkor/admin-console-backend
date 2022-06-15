@@ -7,7 +7,63 @@ const bcrypt = require("bcryptjs");
 const jwt = require("./middleware/jwtAccess");
 const Users = require("./auth-model");
 
-// POST /auth/register register new chef - FUNCTIONAL
+// GET display all of the users
+// IMPORTANT IMPLEMENT SECURITY
+router.get("/users", (req, res) => {
+  Users.find()
+    .then((users) => {
+      res.status(200).json({ users: users });
+      console.log(users);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ message: "Cannot get users..." });
+    });
+});
+
+// GET filter-search user
+router.get("/filter", (req, res, next) => {
+  const filters = req.query;
+  console.log("users ", filters);
+  Users.findBy(filters)
+    .then((user) => {
+      if (user) {
+        console.log("We found user", user);
+        res.status(200).json({ user: user });
+      } else {
+        res.status(404).json({ message: "User does not exist..." });
+        console.log("No user");
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: `internal server error ${err}` });
+    });
+});
+
+// GET sort by filter
+router.get("/sort", (req, res) => {});
+
+// GET display single user by id
+router.get("/:id", (req, res) => {
+  const id = req.params.id;
+
+  Users.getUser(id)
+    .then((user) => {
+      console.log(user);
+      if (user) {
+        res.status(200).json({ user: user });
+      } else {
+        res.status(400).json({ message: "Cannot find user in database..." });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ message: "Failed to get user..." });
+    });
+});
+
+// POST /auth/register register new user - FUNCTIONAL
 router.post("/register", validateNewUser, (req, res) => {
   const user = req.body;
   const hash = bcrypt.hashSync(user.password, HashFactor);

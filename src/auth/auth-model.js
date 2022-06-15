@@ -7,7 +7,20 @@ module.exports = {
   editById,
   findByName,
   findByEmail,
+  find,
+  getUser,
 };
+
+function find() {
+  return db("users");
+}
+
+function getUser(id) {
+  return db("users")
+    .select("id", "first_name", "last_name", "email")
+    .where({ id })
+    .first();
+}
 
 function addUser(user) {
   return db("users")
@@ -24,11 +37,15 @@ function findById(id) {
     .where({
       id,
     })
-    .first();
+    .first(); // return an object instead of an array
 }
 
+// filter-search function
 function findBy(filter) {
-  return db("users").where(filter);
+  return db("users")
+    .select("id", "first_name", "last_name", "username", "email")
+    .where(filter)
+    .first();
 }
 
 // Edit user info
