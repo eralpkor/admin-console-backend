@@ -8,13 +8,17 @@ const authenticate = require("../auth/middleware/auth-middleware");
 
 const server = express();
 
-server.use(helmet());
-server.use(cors());
-server.use(express.json());
+let corsOptions = {
+  origin: "http://localhost:3000",
+  optionsSuccessStatus: 200,
+};
 
-// //node js
+server.use(helmet());
+server.use(cors(corsOptions));
+server.use(express.json());
+//node js
 // server.use(function (req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
 //   res.header(
 //     "Access-Control-Allow-Headers",
 //     "Origin, X-Requested-With, Content-Type, Accept"
@@ -24,7 +28,7 @@ server.use(express.json());
 
 server.use("/api/private", jobsRouter);
 
-server.use("/api/auth", authRouter);
+server.use("/api", authRouter);
 
 // server.use("/jobs", authenticate, jobsRouter);
 
