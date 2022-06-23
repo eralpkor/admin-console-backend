@@ -7,6 +7,7 @@ module.exports = {
   findByCustomerId,
   findByUserId,
   sortByFieldName,
+  findAllJobs,
 };
 
 // ********** JOB related model from here *****************
@@ -57,12 +58,18 @@ function findByUserId(user_id) {
 
 // GET jobs by progress/status desc or asc
 function sortByFieldName(sortByName, direction) {
-  return (
-    db("jobs")
-      .select()
-      // .where("in_progress")
-      // .orderBy("in_progress", sort)
-      .orderBy(sortByName, direction)
-  );
+  return db("jobs").select().orderBy(sortByName, direction);
   // .orderBy("job_title", "asc");
+}
+
+function findAllJobs() {
+  return db("jobs")
+    .select(
+      "jobs.*",
+      "customer.first_name",
+      "customer.last_name",
+      "users.username"
+    )
+    .join("customer", "customer.id", "jobs.customer_id")
+    .join("users", "users.id", "jobs.user_id");
 }
