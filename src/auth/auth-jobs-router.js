@@ -15,7 +15,7 @@ function isObjectEmpty(obj) {
 
 // GET all jobs no-filter
 router.get("/jobs", (req, res) => {
-  Jobs.find()
+  Jobs.findAllJobs()
     .then((jobs) => {
       res.status(200).json({ jobs: jobs });
     })
@@ -32,6 +32,7 @@ router.post("/jobs/create", (req, res) => {
   if (isObjectEmpty(job))
     res.status(409).json({ error: "Please enter something" });
 
+  // add some validation for the database
   Jobs.addJob(job)
     .then((newJob) => {
       res
@@ -78,6 +79,63 @@ router.get("/jobs/customer-job/:id", (req, res) => {
     .catch((err) => {
       console.log(err);
       res.status(500).json({ error: "Server error.. " });
+    });
+});
+
+// GET jobs by user/admin id
+router.get("/jobs/user-job/:id", (req, res, next) => {
+  const id = req.params.id;
+
+  Users.findById(id)
+    .then((ids) => {
+      if (!ids) {
+        console.log("user do not exist");
+        res.status(404).json({ message: "That user does not exist " });
+      } else {
+        Jobs.findByUserId(id)
+          .then((jobs) => {
+            if (jobs.length > 0) {
+              res.status(200).json({ jobs: jobs });
+            } else {
+              res
+                .status(400)
+                .json({ message: "You did not create any jobs yet " });
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(500).json({ err: "Server error..." });
+          });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ err: "Server error..." });
+    });
+});
+
+// GET jobs by progress status
+// example /jobs/status?customer_id=desc
+// example /jobs/status?in_progress=asc
+
+router.get("/jobs/status", (req, res) => {
+  // const { order } = req.query;
+  const sortByName = Object.keys(req.query)[0];
+  const order = Object.values(req.query)[0];
+  // console.log("What is direction ", order);
+  // console.log("sortbyname ", sortByName);
+  Jobs.sortByFieldName(sortByName, order)
+    .then((jobs) => {
+      console.log("Jobs: ", jobs);
+      if (jobs.length === 0) {
+        res.status(404).json({ message: "No jobs" });
+      } else {
+        res.status(200).json({ jobs: jobs });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: "Server error..." });
     });
 });
 
