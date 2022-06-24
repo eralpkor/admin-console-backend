@@ -16,10 +16,13 @@ function find() {
 }
 
 function getUser(id) {
-  return db("users")
-    .select("id", "first_name", "last_name", "email")
-    .where({ id })
-    .first();
+  return (
+    db("users")
+      // .select("id", "first_name", "last_name", "email")
+      .select()
+      .where({ id })
+      .first()
+  );
 }
 
 function addUser(user) {
@@ -40,12 +43,10 @@ function findById(id) {
     .first(); // return an object instead of an array
 }
 
-// filter-search function
+//
+// filter-search function for login
 function findBy(filter) {
-  return db("users")
-    .select("id", "first_name", "last_name", "username", "email")
-    .where(filter)
-    .first();
+  return db("users").select().where(filter);
 }
 
 // Edit user info
