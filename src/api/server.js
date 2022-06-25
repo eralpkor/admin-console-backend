@@ -5,6 +5,7 @@ const helmet = require("helmet");
 const authRouter = require("../auth/auth-router");
 const jobsRouter = require("../auth/auth-jobs-router");
 const authenticate = require("../auth/middleware/auth-middleware");
+const customerRouter = require("../auth/auth-customer-router");
 
 const server = express();
 
@@ -27,7 +28,7 @@ server.use(express.json());
 // });
 
 server.use("/api/private", jobsRouter);
-
+server.use("/api", customerRouter);
 server.use("/api", authRouter);
 
 // server.use("/jobs", authenticate, jobsRouter);
