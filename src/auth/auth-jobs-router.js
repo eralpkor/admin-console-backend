@@ -1,10 +1,6 @@
 const router = require("express").Router();
 require("dotenv").config();
-const HashFactor = parseInt(process.env.HASH) || 8;
-const validateNewUser = require("./validNewUser");
-const validateLogin = require("./validLoginUser");
-const bcrypt = require("bcryptjs");
-const jwt = require("./middleware/jwtAccess");
+
 const Users = require("./auth-model");
 const Jobs = require("./auth-jobs-model");
 const omit = require("../helpers/omit");
