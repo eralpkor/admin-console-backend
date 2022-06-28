@@ -15,6 +15,9 @@ exports.seed = async function (knex) {
       customer_id: 1,
       user_id: 2,
       in_progress: true,
+      //   customer_first: "Michael",
+      //   customer_last: "Jackson",
+      //   user_name: "eralp",
     },
     {
       job_title: "Someting else",
@@ -24,6 +27,9 @@ exports.seed = async function (knex) {
       customer_id: 2,
       user_id: 1,
       in_progress: false,
+      // customer_first: "Susan",
+      // customer_last: "Elain",
+      // user_name: "jatinder",
     },
   ]);
 };
