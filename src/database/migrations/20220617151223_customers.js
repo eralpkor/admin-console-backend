@@ -2,6 +2,7 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
+
 exports.up = function (knex) {
   return knex.schema
     .createTable("customer", (tbl) => {
@@ -15,10 +16,10 @@ exports.up = function (knex) {
     })
     .createTable("jobs", (tbl) => {
       tbl.increments();
-      tbl.timestamp("created_at").defaultTo(knex.fn.now());
+      tbl.string("created_at", 50);
       tbl.string("job_title", 128).notNullable();
       tbl.string("job_description", 1024).notNullable();
-      tbl.boolean("in_progress").notNullable();
+      tbl.enu("in_progress", ["open", "in-progress", "closed"]);
       tbl.date("due_date");
       tbl.float("amount", 128);
       tbl
