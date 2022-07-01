@@ -1,9 +1,8 @@
 const router = require("express").Router();
-require("dotenv").config();
-
+const jwt = require("./middleware/jwtAccess");
 const Users = require("./auth-model");
 const Jobs = require("./auth-jobs-model");
-const omit = require("../helpers/omit");
+require("dotenv").config();
 
 function isObjectEmpty(obj) {
   return Object.keys(obj).length === 0;
@@ -132,6 +131,47 @@ router.get("/jobs/status", (req, res) => {
     .catch((err) => {
       console.log(err);
       res.status(500).json({ error: "Server error..." });
+    });
+});
+
+// PUT EDIT a single job
+router.put("/jobs/update/:id", jwt.checkToken(), (req, res) => {
+  const userId = req.user.subject;
+  const changes = req.body;
+  const { id } = req.params;
+  console.log(id);
+  if (Object.keys(changes).length === 0) {
+    res.status(422).json({ error: "Request body cannot be empty." });
+  }
+
+  Users.findById(userId)
+    .then((u) => {
+      if (u.id === userId) {
+        Jobs.findById(id).then((ids) => {
+          console.log("JOB ids ", ids);
+          if (ids) {
+            Jobs.updateJob(id, changes)
+              .then((job) => {
+                res
+                  .status(200)
+                  .json({
+                    message: `${Object.keys(changes)} updated successfully. `,
+                    changes,
+                  });
+              })
+              .catch((err) => {
+                console.log(err);
+                res.status(404).json({ error: "No change happened..." });
+              });
+          } else {
+            res.status(404).json({ message: `No job with given id: ${id} ` });
+          }
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: err });
     });
 });
 
