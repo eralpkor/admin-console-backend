@@ -8,6 +8,8 @@ module.exports = {
   findByUserId,
   sortByFieldName,
   findAllJobs,
+  findById,
+  updateJob,
 };
 
 // ********** JOB related model from here *****************
@@ -26,7 +28,7 @@ function addJob(job) {
 }
 
 function findById(id) {
-  return db("jobs").select("id", "job_title").where({ id }).first();
+  return db("jobs").where({ id }).first();
 }
 
 function findBy(filter) {
@@ -72,4 +74,8 @@ function findAllJobs() {
     )
     .join("customer", "customer.id", "jobs.customer_id")
     .join("users", "users.id", "jobs.user_id");
+}
+
+function updateJob(id, changes) {
+  return db("jobs").where({ id }).update(changes, "*");
 }
