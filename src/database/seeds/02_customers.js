@@ -2,33 +2,30 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
+const faker = require("faker");
+
+function time() {
+  return new Date();
+}
+
+let now = time().toLocaleString();
+
+const createFakeCustomers = () => ({
+  first_name: faker.name.firstName(),
+  last_name: faker.name.lastName(),
+  email: faker.internet.email(),
+  phone: faker.phone.phoneNumber(),
+  company: faker.company.companyName(),
+  notes: faker.random.words(7),
+});
+
 exports.seed = async function (knex) {
+  const fakeCustomers = [];
+  const desiredFakeCustomers = 50;
+  for (let i = 0; i < desiredFakeCustomers; i++) {
+    fakeCustomers.push(createFakeCustomers());
+  }
   // Deletes ALL existing entries
-  await knex("customer").del();
-  await knex("customer").insert([
-    {
-      first_name: "John",
-      last_name: "Smith",
-      email: "john@example.com",
-      phone: "919 666 1212",
-      company: "Axura",
-      notes: "very cool person",
-    },
-    {
-      first_name: "Tricia",
-      last_name: "Jeforson",
-      email: "hello@hello.com",
-      phone: "675 5656",
-      company: "vtech",
-      notes: "nice",
-    },
-    {
-      first_name: "Kai",
-      last_name: "Kor",
-      email: "kai@test.com",
-      phone: "none",
-      company: "none",
-      notes: "she is a puppy",
-    },
-  ]);
+  await knex("customers").del();
+  await knex("customers").insert(fakeCustomers);
 };

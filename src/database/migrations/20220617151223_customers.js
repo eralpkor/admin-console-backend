@@ -5,7 +5,7 @@
 
 exports.up = function (knex) {
   return knex.schema
-    .createTable("customer", (tbl) => {
+    .createTable("customers", (tbl) => {
       tbl.increments();
       tbl.string("first_name", 128);
       tbl.string("last_name", 128);
@@ -21,13 +21,20 @@ exports.up = function (knex) {
       tbl.string("job_description", 1024).notNullable();
       tbl.enu("in_progress", ["open", "in-progress", "closed"]);
       tbl.date("due_date");
-      tbl.float("amount", 128);
+      // assign to user
+      tbl.integer("assigned_to");
+      // add amount owe
+      tbl.float("balance");
+      tbl.float("amount_paid_1");
+      tbl.float("amount_paid_2");
+      tbl.float("amount_paid_3");
+
       tbl
         .integer("customer_id")
         .unsigned()
         .notNullable()
         .references("id")
-        .inTable("customer")
+        .inTable("customers")
         .onUpdate("CASCADE")
         .onDelete("CASCADE");
       tbl.integer("user_id").unsigned().references("users.id");
