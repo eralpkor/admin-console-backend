@@ -28,7 +28,7 @@ function randomNumber(min, max) {
 const createFakeJobs = () => ({
   job_title: faker.random.words(),
   job_description: faker.random.words(10),
-  due_date: faker.date.future(),
+  due_date: now,
   balance: 250.75,
   amount_paid_1: 0,
   amount_paid_2: 0,
@@ -37,6 +37,7 @@ const createFakeJobs = () => ({
   user_id: randomNumber(1, 4),
   in_progress: progress.randomProgress(),
   created_at: now,
+  assigned_to: randomNumber(1, 4),
 });
 
 exports.seed = async function (knex) {

@@ -45,7 +45,7 @@ function findByCustomerId(customer_id) {
   return db("jobs")
     .select("jobs.*")
     .from("jobs")
-    .join("customer", "customer.id", "jobs.customer_id")
+    .join("customers", "customers.id", "jobs.customer_id")
     .where("customer_id", customer_id);
 }
 
@@ -68,11 +68,11 @@ function findAllJobs() {
   return db("jobs")
     .select(
       "jobs.*",
-      "customer.first_name",
-      "customer.last_name",
+      "customers.first_name",
+      "customers.last_name",
       "users.username"
     )
-    .join("customer", "customer.id", "jobs.customer_id")
+    .join("customers", "customers.id", "jobs.customer_id")
     .join("users", "users.id", "jobs.user_id");
 }
 

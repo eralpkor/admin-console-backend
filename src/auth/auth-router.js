@@ -12,8 +12,9 @@ const Users = require("./auth-model");
 router.get("/users", (req, res) => {
   Users.find()
     .then((users) => {
-      res.status(200).json({ users: users });
-      console.log(users);
+      // res.status(200).json({ users: users });
+      res.status(200).json({ users });
+      console.log("All users ", users);
     })
     .catch((err) => {
       console.log(err);
@@ -21,13 +22,15 @@ router.get("/users", (req, res) => {
     });
 });
 
-// GET filter-search user
+// GET filter-search user ie: "/filter?username=jatinder or ?id=2"
+//http://localhost:5000?city=Metropolis&age=21
 router.get("/filter", (req, res, next) => {
   const filters = req.query;
-  console.log("users ", filters);
+  console.log("filtered user ", filters);
+
   Users.findBy(filters)
     .then((user) => {
-      if (user) {
+      if (user.length > 0) {
         console.log("We found user", user);
         res.status(200).json({ user: user });
       } else {
@@ -41,16 +44,13 @@ router.get("/filter", (req, res, next) => {
     });
 });
 
-// GET sort by filter
-router.get("/sort", (req, res) => {});
-
 // GET display single user by id
-router.get("/:id", (req, res) => {
+router.get("user/:id", (req, res) => {
   const id = req.params.id;
 
   Users.getUser(id)
     .then((user) => {
-      console.log(user);
+      console.log("By id ", user);
       if (user) {
         res.status(200).json({ user: user });
       } else {
@@ -68,10 +68,10 @@ router.post("/register", validateNewUser, (req, res) => {
   const user = req.body;
   const hash = bcrypt.hashSync(user.password, HashFactor);
   user.password = hash;
-
+  console.log("New user body object ", user);
   Users.addUser(user)
     .then((newUser) => {
-      // console.log(newUser);
+      console.log("NEW user register object ", newUser);
       const token = jwt.generateToken(newUser);
       res.status(201).json({
         message: `Welcome ${newUser.username}, your account is created.`,
@@ -87,9 +87,8 @@ router.post("/register", validateNewUser, (req, res) => {
 
 // validateLogin
 // POST /api/auth/login login user - FUNCTIONAL
-router.post("/login", validateLogin, (req, res) => {
+router.post("/authenticate", validateLogin, (req, res) => {
   const { username, password } = req.body;
-
   Users.findBy({ username })
     .first()
     .then((u) => {
@@ -101,8 +100,11 @@ router.post("/login", validateLogin, (req, res) => {
           user: u.username,
           token,
           id: u.id,
+          first_name: u.first_name,
+          last_name: u.last_name,
         });
       } else {
+        console.log("Wrong creds.");
         res.status(401).json({ message: `Wrong login credentials.` });
       }
     })
