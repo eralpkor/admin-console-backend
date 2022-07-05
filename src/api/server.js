@@ -27,8 +27,8 @@ server.use(express.json());
 //   next();
 // });
 
-server.use("/api/private", jobsRouter);
-server.use("/api", customerRouter);
+server.use("/api/private", authenticate, jobsRouter);
+server.use("/api/private", authenticate, customerRouter);
 server.use("/api", authRouter);
 
 // server.use("/jobs", authenticate, jobsRouter);
