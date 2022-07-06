@@ -36,17 +36,17 @@ function addUser(user) {
 
 function findById(id) {
   return db("users")
-    .select("id", "username")
+    .select("id", "username", "is_admin")
     .where({
       id,
     })
     .first(); // return an object instead of an array
 }
 
-//
 // filter-search function for login
 function findBy(filter) {
-  return db("users").select().where(filter);
+  console.log(filter);
+  return db("users").where(filter);
 }
 
 // Edit user info
