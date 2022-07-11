@@ -10,8 +10,9 @@ const customerRouter = require("../auth/auth-customer-router");
 const server = express();
 
 let corsOptions = {
-  origin: "http://localhost:3000",
+  origin: "*",
   optionsSuccessStatus: 200,
+  exposedHeaders: ["Content-Range"],
 };
 
 server.use(helmet());
@@ -27,8 +28,8 @@ server.use(express.json());
 //   next();
 // });
 
-server.use("/api/private", authenticate, jobsRouter);
-server.use("/api/private", authenticate, customerRouter);
+server.use("/api", jobsRouter);
+server.use("/api", customerRouter);
 server.use("/api", authRouter);
 
 // server.use("/jobs", authenticate, jobsRouter);
