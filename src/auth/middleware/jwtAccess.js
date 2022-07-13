@@ -8,6 +8,7 @@ const generateToken = (user) => {
   const payload = {
     subject: user.id,
     username: user.username,
+    isAdmin: user.is_admin,
   };
   const options = {
     expiresIn: "1d",
@@ -28,7 +29,6 @@ const checkToken = () => {
           });
         } else {
           req.user = decoded;
-
           next();
         }
       });
