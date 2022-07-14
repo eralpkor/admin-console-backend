@@ -4,9 +4,11 @@ module.exports = async (req, res, next) => {
   const errors = [];
 
   function validateNewUser(user) {
+    console.log(user);
     !user.username && errors.push({ username: "required" });
     !user.password && errors.push({ password: "required" });
     !user.email && errors.push({ email: "required" });
+    // user.is_admin === 0 || user.is_admin === 1 && errors.push({ is_admin: "required" });
 
     //Validate Char Length
     Object.keys(user).map((x) => {
