@@ -13,6 +13,7 @@ module.exports = (req, res, next) => {
           .json({ message: "Invalid Token, you will need to Log back in" });
       } else {
         req.decodedToken = decodedToken;
+        console.log("What is decoded token ", decodedToken);
         next();
       }
     });
