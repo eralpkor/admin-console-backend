@@ -37,19 +37,16 @@ router.post("/authenticate", validateLogin, (req, res) => {
     });
 });
 // POST /auth/register register new user - FUNCTIONAL
-router.post("/register", validateNewUser, (req, res) => {
+router.post("/users", validateNewUser, (req, res) => {
   const user = req.body;
   const hash = bcrypt.hashSync(user.password, HashFactor);
   user.password = hash;
   console.log("New user body object ", user);
   Users.addUser(user)
     .then((newUser) => {
+      console.log(newUser);
       const token = jwt.generateToken(newUser);
-      res.status(201).json({
-        message: `Welcome ${newUser.username}, your account is created.`,
-        user: newUser,
-        token,
-      });
+      res.status(201).json(newUser);
     })
     .catch((err) => {
       console.log(err);
@@ -59,17 +56,18 @@ router.post("/register", validateNewUser, (req, res) => {
 
 // GET display all of the users
 // IMPORTANT IMPLEMENT SECURITY
-router.get("/users", jwt.checkToken(), (req, res, next) => {
-  if (!req.user.isAdmin) {
-    res
-      .status(401)
-      .json({ message: "You are not authorized to see this page..." });
-    return res.send();
-  }
+router.get("/users", (req, res, next) => {
+  // if (!req.user.isAdmin) {
+  //   res
+  //     .status(401)
+  //     .json({ message: "You are not authorized to see this page..." });
+  //   return res.send();
+  // }
   Users.find()
     .then((users) => {
       // res.status(200).json({ users: users });
-      res.status(200).json({ users });
+      res.setHeader(`Content-Range`, users.length);
+      res.status(200).json(users);
     })
     .catch((err) => {
       console.log(err);
@@ -105,19 +103,20 @@ router.get("/filter", jwt.checkToken(), (req, res) => {
 });
 
 // GET display single user by id
-router.get("user/:id", jwt.checkToken(), (req, res) => {
+router.get("/users/:id", (req, res) => {
   const id = req.params.id;
-  if (!req.user.isAdmin) {
-    res
-      .status(401)
-      .json({ message: "You are not authorized to see this page..." });
-    return res.send();
-  }
+  // if (!req.user.isAdmin) {
+  //   res
+  //     .status(401)
+  //     .json({ message: "You are not authorized to see this page..." });
+  //   return res.send();
+  // }
+  console.log(id);
   Users.getUser(id)
     .then((user) => {
       console.log("By id ", user);
       if (user) {
-        res.status(200).json({ user: user });
+        res.status(200).json(user);
       } else {
         res.status(400).json({ message: "Cannot find user in database..." });
       }
@@ -129,31 +128,32 @@ router.get("user/:id", jwt.checkToken(), (req, res) => {
 });
 
 // PUT /api/auth/update Edit user information - FUNCTIONAL
-router.put("/update", jwt.checkToken(), (req, res) => {
-  const userId = req.user.subject;
+router.put("/users/:id", (req, res) => {
+  // const userId = req.user.subject;
+  const userId = req.params.id;
   const changes = req.body;
-  if (!req.user.isAdmin) {
-    res
-      .status(401)
-      .json({ message: "You are not authorized to see this page..." });
-    return res.send();
-  }
+  // if (!req.user.isAdmin) {
+  //   res
+  //     .status(401)
+  //     .json({ message: "You are not authorized to see this page..." });
+  //   return res.send();
+  // }
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
 
   Users.findById(userId)
     .then((u) => {
-      if (u.id === userId) {
+      if (u.id == userId) {
         if (changes.password) {
           const hash = bcrypt.hashSync(changes.password, HashFactor);
           changes.password = hash;
         }
+
         Users.editById(userId, changes)
           .then((user) => {
-            res.status(200).json({
-              message: `${Object.keys(changes)} updated successfully`,
-            });
+            console.log("edit by id ", user);
+            res.status(200).json(user);
           })
           .catch((err) => {
             console.log(err);
@@ -161,13 +161,42 @@ router.put("/update", jwt.checkToken(), (req, res) => {
           });
       } else {
         res.status(404).json({
-          message: `The server can not find requested resource. User id: ${id}`,
+          message: `The server can not find requested resource. User id: ${userId}`,
         });
       }
     })
     .catch((err) => {
       console.log(err);
       res.status(500).json({ error: err });
+    });
+});
+
+// DELETE user
+router.delete("/users/:id", (req, res) => {
+  const { id } = req.params;
+
+  Users.findById(id)
+    .then((user) => {
+      console.log(user);
+      if (user) {
+        Users.deleteOne(id)
+          .then((user) => {
+            console.log(user);
+            res.status(201).json(user);
+          })
+          .catch((error) => {
+            console.log(error);
+            res.status(500).json({ error: error });
+          });
+      } else {
+        res
+          .status(400)
+          .json({ message: `No user with 🆔 ${id} in database..` });
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: error });
     });
 });
 
