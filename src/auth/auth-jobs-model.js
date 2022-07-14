@@ -10,12 +10,31 @@ module.exports = {
   findAllJobs,
   findById,
   updateJob,
+  calculateBalance,
+  deleteOne,
+  findByIdEdit,
+  decrementBalance,
 };
 
 // ********** JOB related model from here *****************
 // Find all jobs and return
 function find() {
   return db("jobs");
+}
+function findAllJobs() {
+  return (
+    db("jobs")
+      .select(
+        "jobs.*",
+        "customers.first_name",
+        "customers.last_name",
+        "users.username"
+      )
+      .join("customers", "customers.id", "jobs.customer_id")
+      // .join("users", "users.id", "jobs.user_id")
+      .join("users", "users.id", "jobs.assigned_to")
+    // .andWhere("is_deleted", false)
+  );
 }
 
 function addJob(job) {
@@ -27,8 +46,31 @@ function addJob(job) {
     });
 }
 
+function findByIdEdit(id) {
+  return db("jobs")
+    .select("jobs.*", "comments.*")
+    .join("comments", "comments.job_id", "=", "jobs.id")
+    .where("jobs.id", "=", id)
+
+    .first();
+}
+
 function findById(id) {
-  return db("jobs").where({ id }).first();
+  return (
+    db("jobs")
+      .select()
+      // "jobs.*"
+      // "customers.first_name",
+      // "customers.last_name",
+      // "users.username"
+
+      // .join("customers", "customers.id", "jobs.customer_id")
+
+      // .join("users", "users.id", "jobs.assigned_to")
+      .where("id", id)
+
+      .first()
+  );
 }
 
 function findBy(filter) {
@@ -64,18 +106,57 @@ function sortByFieldName(sortByName, direction) {
   // .orderBy("job_title", "asc");
 }
 
-function findAllJobs() {
-  return db("jobs")
-    .select(
-      "jobs.*",
-      "customers.first_name",
-      "customers.last_name",
-      "users.username"
-    )
-    .join("customers", "customers.id", "jobs.customer_id")
-    .join("users", "users.id", "jobs.user_id");
-}
+// function findAllJobs() {
+//   return db("jobs")
+//     .select(
+//       "jobs.*",
+//       "customers.first_name",
+//       "customers.last_name",
+//       "users.username"
+//     )
+//     .join("customers", function () {
+//       this.on("customers.id", "=", "jobs.customer_id").orOn(
+//         "customers.assigned_to",
+//         "=",
+//         "users.username"
+//       );
+//     });
+// }
 
 function updateJob(id, changes) {
   return db("jobs").where({ id }).update(changes, "*");
+}
+
+function calculateBalance(id) {
+  return db("jobs")
+    .where({ id })
+    .select()
+    .sum({ amount_paid: ["amount_paid_1", "amount_paid_2", "amount_paid_3"] });
+}
+
+function deleteOne(id, update) {
+  return db("jobs").where({ id }).del();
+}
+
+function decrementBalance(id) {
+  return db("jobs").select("balance");
+  // return db("jobs")
+  //   .select(db.raw("select balance - amount_paid_1"))
+  //   .then(function (resp) {
+  //     console.log(resp);
+  //   });
+  // return db("jobs").select(
+  // "balance",
+  // "-",
+  // "amount_paid_1",
+  // "-",
+  // "amount_paid_2",
+  // "-",
+  // "amount_paid_3"
+  // );
+  // .decrement({
+  //   balance: 10,
+  //   // balance: "amount_paid_2",
+  //   // balance: "amount_paid_3",
+  // });
 }
