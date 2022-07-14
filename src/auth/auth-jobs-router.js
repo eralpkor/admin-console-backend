@@ -8,15 +8,49 @@ function isObjectEmpty(obj) {
   return Object.keys(obj).length === 0;
 }
 
+function sortAsc(arr, columnName) {
+  return arr.sort((a, b) => {
+    if (typeof a[columnName] === "number") {
+      return a[columnName] - b[columnName];
+    } else {
+      return a[columnName].localeCompare(b[columnName]);
+    }
+  });
+}
+
+function sortDesc(arr, columnName) {
+  return arr.sort((a, b) => {
+    if (typeof a[columnName] === "number") {
+      return b[columnName] - a[columnName];
+    } else {
+      return b[columnName].localeCompare(a[columnName]);
+    }
+  });
+}
 // GET all jobs no-filter
+// http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
 router.get("/jobs", (req, res) => {
+  const columnName = JSON.parse(req.query.sort)[0];
+  const order = JSON.parse(req.query.sort)[1];
+
   Jobs.findAllJobs()
     .then((jobs) => {
-      res.status(200).json({ jobs: jobs });
+      // added for admin-console
+      res.setHeader(`Content-Range`, jobs.length);
+      let sortedJobs = jobs;
+      // console.log(sortedJobs);
+
+      if (order === "ASC") {
+        sortedJobs = sortAsc(jobs, columnName);
+      }
+      if (order === "DESC") {
+        sortedJobs = sortDesc(jobs, columnName);
+      }
+      res.status(200).json(sortedJobs);
     })
     .catch((err) => {
       console.log(err);
-      res.status(500).json({ message: "Cannot get posts..." });
+      res.status(500).json({ message: "Cannot get jobs..." });
     });
 });
 
@@ -30,9 +64,7 @@ router.post("/jobs/create", (req, res) => {
   // add some validation for the database
   Jobs.addJob(job)
     .then((newJob) => {
-      res
-        .status(201)
-        .json({ message: `New Job Created with title: ${newJob.job_title} ` });
+      res.status(201).json(newJob);
     })
     .catch((err) => {
       console.log(err);
@@ -40,15 +72,18 @@ router.post("/jobs/create", (req, res) => {
     });
 });
 
-// GET find job by filter any
-router.get("/jobs/filter", (req, res) => {
-  const filter = req.query;
-  console.log("whats query ", filter);
+// GET find job by ID
+router.get("/jobs/:id", (req, res) => {
+  const { id } = req.params;
+  console.log("whats params ", id);
 
-  Jobs.findBy(filter)
+  Jobs.findById(id)
     .then((job) => {
+      console.log("what is job ", job);
+
       if (job) {
-        res.status(200).json({ job: job });
+        console.log("what is job", job);
+        res.status(200).json(job);
       } else {
         res.status(400).json({ message: "That job does not exist" });
       }
@@ -110,33 +145,38 @@ router.get("/jobs/user-job/:id", (req, res, next) => {
 });
 
 // GET jobs by progress status
-// example /jobs/status?customer_id=desc
-// example /jobs/status?in_progress=asc
+// example /jobs?customer_id=desc
+// example /jobs?in_progress=asc
+// http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
+// router.get("/jobs", (req, res) => {
+//   // const sort = {
+//   //   field: Object.keys(req.query)[0],
+//   //   order: Object.values(req.query)[0],
+//   // };
+//   console.log("What is query", req.query.sort[0]);
 
-router.get("/jobs/status", (req, res) => {
-  // const { order } = req.query;
-  const sortByName = Object.keys(req.query)[0];
-  const order = Object.values(req.query)[0];
-  // console.log("What is direction ", order);
-  // console.log("sortbyname ", sortByName);
-  Jobs.sortByFieldName(sortByName, order)
-    .then((jobs) => {
-      console.log("Jobs: ", jobs);
-      if (jobs.length === 0) {
-        res.status(404).json({ message: "No jobs" });
-      } else {
-        res.status(200).json({ jobs: jobs });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ error: "Server error..." });
-    });
-});
+//   // const sortByName = Object.keys(req.query)[0];
+//   // const order = Object.values(req.query)[0];
+//   // console.log("What is direction ", sort.order);
+//   // console.log("sortbyname ", sort.field);
+//   Jobs.sortByFieldName(req.query.sort[0], sort.order)
+//     .then((jobs) => {
+//       console.log("Jobs: ", jobs);
+//       if (jobs.length === 0) {
+//         res.status(404).json({ message: "No jobs" });
+//       } else {
+//         res.status(200).json({ jobs: jobs });
+//       }
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//       res.status(500).json({ error: "Server error..." });
+//     });
+// });
 
 // PUT EDIT a single job
-router.put("/jobs/update/:id", jwt.checkToken(), (req, res) => {
-  const userId = req.user.subject;
+router.put("/jobs/:id", (req, res) => {
+  // const userId = req.user.subject;
   const changes = req.body;
   const { id } = req.params;
   console.log(id);
@@ -144,35 +184,77 @@ router.put("/jobs/update/:id", jwt.checkToken(), (req, res) => {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
 
-  Users.findById(userId)
-    .then((u) => {
-      if (u.id === userId) {
-        Jobs.findById(id).then((ids) => {
-          console.log("JOB ids ", ids);
-          if (ids) {
-            Jobs.updateJob(id, changes)
-              .then((job) => {
-                res
-                  .status(200)
-                  .json({
-                    message: `${Object.keys(changes)} updated successfully. `,
-                    changes,
-                  });
-              })
-              .catch((err) => {
-                console.log(err);
-                res.status(404).json({ error: "No change happened..." });
-              });
-          } else {
-            res.status(404).json({ message: `No job with given id: ${id} ` });
-          }
+  Jobs.findById(id).then((ids) => {
+    console.log("JOB ids ", ids);
+    if (ids) {
+      Jobs.updateJob(id, changes)
+        .then((job) => {
+          res.status(200).json(changes);
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(404).json({ error: "No change happened..." });
         });
+    } else {
+      res.status(404).json({ message: `No job with given id: ${id} ` });
+    }
+  });
+  // Users.findById(userId)
+  //   .then((u) => {
+  //     if (u.id === userId) {
+  //       Jobs.findById(id).then((ids) => {
+  //         console.log("JOB ids ", ids);
+  //         if (ids) {
+  //           Jobs.updateJob(id, changes)
+  //             .then((job) => {
+  //               res.status(200).json({
+  //                 message: `${Object.keys(changes)} updated successfully. `,
+  //                 changes,
+  //               });
+  //             })
+  //             .catch((err) => {
+  //               console.log(err);
+  //               res.status(404).json({ error: "No change happened..." });
+  //             });
+  //         } else {
+  //           res.status(404).json({ message: `No job with given id: ${id} ` });
+  //         }
+  //       });
+  //     }
+  //   })
+  //   .catch((err) => {
+  //     console.log(err);
+  //     res.status(500).json({ error: err });
+  //   });
+});
+
+router.delete("/jobs/:id", (req, res) => {
+  const { id } = req.params;
+
+  Jobs.findById(id)
+    .then((job) => {
+      console.log(job);
+      if (job) {
+        Jobs.deleteOne(id)
+          .then((job) => {
+            console.log(job);
+            res.status(201).json(job);
+          })
+          .catch((error) => {
+            console.log(error);
+            res.status(500).json({ error: error });
+          });
+      } else {
+        res.status(400).json({ message: `No job with 🆔 ${id} in database..` });
       }
     })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ error: err });
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: error });
     });
 });
+
+// calculate balance
+router.put("/jobs/:id");
 
 module.exports = router;
