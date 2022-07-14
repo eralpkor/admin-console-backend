@@ -9,6 +9,7 @@ module.exports = {
   findByEmail,
   find,
   getUser,
+  deleteOne,
 };
 
 function find() {
@@ -36,7 +37,7 @@ function addUser(user) {
 
 function findById(id) {
   return db("users")
-    .select("id", "username", "is_admin")
+    .select("id", "username", "is_admin", "first_name", "last_name")
     .where({
       id,
     })
@@ -51,7 +52,9 @@ function findBy(filter) {
 
 // Edit user info
 function editById(id, update) {
-  return db("users").where({ id }).update(update, "*");
+  return db("users")
+    .where({ id })
+    .update(update, ["id", "username", "first_name"]);
 }
 
 // for validation
@@ -72,4 +75,9 @@ function findByEmail(email) {
       email,
     })
     .first();
+}
+
+// DELETE user
+function deleteOne(id, update) {
+  return db("users").where({ id }).del();
 }
