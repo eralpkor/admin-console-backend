@@ -10,7 +10,6 @@ const Users = require("./auth-model");
 // POST /api/auth/login login user - FUNCTIONAL
 router.post("/authenticate", validateLogin, (req, res) => {
   const { username, password } = req.body;
-  console.log(req.body);
   Users.findBy({ username })
     .first()
     .then((u) => {
@@ -24,7 +23,8 @@ router.post("/authenticate", validateLogin, (req, res) => {
           id: u.id,
           first_name: u.first_name,
           last_name: u.last_name,
-          is_admin: u.is_admin,
+          role_id: u.role_id,
+          role: u.role,
         });
       } else {
         console.log("Wrong creds.");
