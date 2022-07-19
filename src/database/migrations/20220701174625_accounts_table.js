@@ -3,34 +3,31 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema
-    .createTable("accounts", (tbl) => {
-      tbl.increments();
-      // account and customer number same
-      tbl
-        .integer("account_id")
-        .unsigned()
-        .notNullable()
-        .references("id")
-        .inTable("jobs")
-        .onUpdate("CASCADE")
-        .onDelete("CASCADE");
-      tbl.float("amount");
-      tbl.float("balance");
-
-      tbl.check("?? >= ??", ["amount", "balance"]);
-      tbl.string("created_at");
-    })
-    .createTable("account_changes", (tbl) => {
-      tbl
-        .integer("changes_id")
-        .unsigned()
-        .notNullable()
-        .references("id")
-        .inTable("accounts");
-      tbl.string("changed_at");
-      tbl.float("amount_paid");
-    });
+  return (
+    knex.schema
+      .createTable("accounts", (tbl) => {
+        // account and customer number same
+        tbl.increments("account_id");
+        tbl.integer("job_id").unsigned();
+        tbl.foreign("job_id").references("jobs.id");
+        tbl.float("total");
+        tbl.float("balance");
+        tbl.timestamp("created_at").defaultTo(knex.fn.now());
+        tbl.timestamp("updated_at").defaultTo(knex.fn.now());
+        tbl.boolean("is_deleted").defaultTo(false);
+      })
+      // Payments goes here
+      .createTable("account_changes", (tbl) => {
+        tbl.increments();
+        tbl.integer("account_id").unsigned();
+        tbl.foreign("account_id").references("accounts.account_id");
+        tbl.string("payment_type");
+        tbl.float("amount_paid");
+        tbl.timestamp("created_at").defaultTo(knex.fn.now());
+        tbl.timestamp("updated_at").defaultTo(knex.fn.now());
+        tbl.boolean("is_deleted").defaultTo(false); // set to true when deleted
+      })
+  );
 };
 
 /**
