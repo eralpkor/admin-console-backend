@@ -22,23 +22,32 @@ function find() {
   return db("jobs");
 }
 function findAllJobs() {
-  return (
-    db("jobs")
-      .select(
-        "jobs.*",
-        "customers.first_name",
-        "customers.last_name",
-        "users.username"
-      )
-      .join("customers", "customers.id", "jobs.customer_id")
-      // .join("users", "users.id", "jobs.user_id")
-      .join("users", "users.id", "jobs.assigned_to")
-    // .andWhere("is_deleted", false)
-  );
+  return db("jobs")
+    .select(
+      "jobs.*",
+      "customers.first_name",
+      "customers.last_name",
+      "users.username as assigned_to",
+      "accounts.job_id as account_id"
+    )
+    .join("customers", "customers.id", "jobs.customer_id")
+    .join("users", "users.id", "jobs.assigned_to")
+    .join("accounts", "accounts.account_id", "jobs.id");
+  // .andWhere("is_deleted", false)
 }
 
 function addJob(job) {
   return db("jobs")
+    .select(
+      "jobs.*",
+      "customers.first_name",
+      "customers.last_name",
+      "users.username as assigned_to",
+      // new shit
+      "accounts.job_id as account_id"
+    )
+    .join("customers", "customers.id", "jobs.customer_id")
+    .join("users", "users.id", "jobs.assigned_to")
     .insert(job, "id")
     .then((ids) => {
       const [id] = ids;
@@ -51,7 +60,6 @@ function findByIdEdit(id) {
     .select("jobs.*", "comments.*")
     .join("comments", "comments.job_id", "=", "jobs.id")
     .where("jobs.id", "=", id)
-
     .first();
 }
 
