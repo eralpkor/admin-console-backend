@@ -14,8 +14,14 @@ module.exports = {
   findByEmail,
 };
 
+// SELECT *, first_name || " " || last_name AS FullName FROM customers
+// var colums = knex.raw(
+//   'SELECT *, first_name || " " || last_name AS FullName FROM customers'
+// );
 function find() {
-  return db("customers");
+  return db("customers")
+    .select("customers.*")
+    .columns(db.raw("first_name || ' ' || last_name AS full_name"));
 }
 
 function findByCustomerId(id) {
