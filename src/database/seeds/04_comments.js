@@ -16,13 +16,12 @@ function randomNumber(min, max) {
 
 const createFakeComments = () => ({
   comment: faker.random.words(10),
-  job_id: randomNumber(1, 50),
-  created_at: now,
+  job_id: randomNumber(1, 20),
 });
 
 exports.seed = async function (knex) {
   const fakeComments = [];
-  const desiredFakeComments = 50;
+  const desiredFakeComments = 20;
   for (let i = 0; i < desiredFakeComments; i++) {
     fakeComments.push(createFakeComments());
   }

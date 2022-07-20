@@ -4,11 +4,7 @@
  */
 const faker = require("faker");
 
-function time() {
-  return new Date();
-}
-
-let now = time().toLocaleString();
+var timestamp = new Date().toLocaleDateString();
 
 const createFakeCustomers = () => ({
   first_name: faker.name.firstName(),
@@ -21,7 +17,7 @@ const createFakeCustomers = () => ({
 
 exports.seed = async function (knex) {
   const fakeCustomers = [];
-  const desiredFakeCustomers = 50;
+  const desiredFakeCustomers = 20;
   for (let i = 0; i < desiredFakeCustomers; i++) {
     fakeCustomers.push(createFakeCustomers());
   }
