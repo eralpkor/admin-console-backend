@@ -7,7 +7,7 @@ exports.up = function (knex) {
     knex.schema
       .createTable("accounts", (tbl) => {
         // account and customer number same
-        tbl.increments("account_id");
+        tbl.increments();
         tbl.integer("job_id").unsigned();
         tbl.foreign("job_id").references("jobs.id");
         tbl.float("total");
@@ -20,8 +20,9 @@ exports.up = function (knex) {
       .createTable("account_changes", (tbl) => {
         tbl.increments();
         tbl.integer("account_id").unsigned();
-        tbl.foreign("account_id").references("accounts.account_id");
+        tbl.foreign("account_id").references("accounts.id");
         tbl.string("payment_type");
+        tbl.string("check_number");
         tbl.float("amount_paid");
         tbl.timestamp("created_at").defaultTo(knex.fn.now());
         tbl.timestamp("updated_at").defaultTo(knex.fn.now());
