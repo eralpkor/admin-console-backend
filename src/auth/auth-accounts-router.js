@@ -1,0 +1,69 @@
+const router = require("express").Router();
+const jwt = require("./middleware/jwtAccess");
+const Users = require("./auth-model");
+const Jobs = require("./auth-jobs-model");
+const Accounts = require("./auth-accounts-model");
+require("dotenv").config();
+
+function isObjectEmpty(obj) {
+  return Object.keys(obj).length === 0;
+}
+
+function sortAsc(arr, columnName) {
+  return arr.sort((a, b) => {
+    if (typeof a[columnName] === "number") {
+      return a[columnName] - b[columnName];
+    } else {
+      return a[columnName].localeCompare(b[columnName]);
+    }
+  });
+}
+
+function sortDesc(arr, columnName) {
+  return arr.sort((a, b) => {
+    if (typeof a[columnName] === "number") {
+      return b[columnName] - a[columnName];
+    } else {
+      return b[columnName].localeCompare(a[columnName]);
+    }
+  });
+}
+// http://localhost:5000/api/accounts?filter={}&range=[0,9]&sort=["id","DESC"]
+router.get("/accounts", (req, res) => {
+  const columnName = JSON.parse(req.query.sort)[0];
+  const order = JSON.parse(req.query.sort)[1];
+
+  Accounts.find()
+    .then((accounts) => {
+      res.setHeader(`Content-Range`, accounts.length);
+      let sorted = accounts;
+
+      if (order === "ASC") {
+        sorted = sortAsc(accounts, columnName);
+      }
+      if (order === "DESC") {
+        sorted = sortDesc(accounts, columnName);
+      }
+      res.status(200).json(sorted);
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: "Cannot get accounts" });
+    });
+});
+
+router.get("/accounts/:id", (req, res) => {
+  const { id } = req.params;
+  Accounts.findById(id)
+    .then((account) => {
+      account
+        ? res.status(200).json(account)
+        : res.status(400).json({ message: "That account does not exist" });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: "Server error" });
+    });
+});
+
+module.exports = router;
