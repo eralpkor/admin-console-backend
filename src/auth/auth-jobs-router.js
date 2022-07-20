@@ -55,7 +55,7 @@ router.get("/jobs", (req, res) => {
 });
 
 // POST create a new job
-router.post("/jobs/create", (req, res) => {
+router.post("/jobs", (req, res) => {
   const job = req.body;
   console.log(job);
   if (isObjectEmpty(job))
