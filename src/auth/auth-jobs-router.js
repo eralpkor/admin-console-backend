@@ -38,7 +38,6 @@ router.get("/jobs", (req, res) => {
       // added for admin-console
       res.setHeader(`Content-Range`, jobs.length);
       let sortedJobs = jobs;
-      // console.log(sortedJobs);
 
       if (order === "ASC") {
         sortedJobs = sortAsc(jobs, columnName);
@@ -48,41 +47,19 @@ router.get("/jobs", (req, res) => {
       }
       res.status(200).json(sortedJobs);
     })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ message: "Cannot get jobs..." });
-    });
-});
-
-// POST create a new job
-router.post("/jobs", (req, res) => {
-  const job = req.body;
-  console.log(job);
-  if (isObjectEmpty(job))
-    res.status(409).json({ error: "Please enter something" });
-
-  // add some validation for the database
-  Jobs.addJob(job)
-    .then((newJob) => {
-      res.status(201).json(newJob);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json(err);
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: "Cannot get jobs..." });
     });
 });
 
 // GET find job by ID
 router.get("/jobs/:id", (req, res) => {
   const { id } = req.params;
-  console.log("whats params ", id);
 
   Jobs.findById(id)
     .then((job) => {
-      console.log("what is job ", job);
-
       if (job) {
-        console.log("what is job", job);
         res.status(200).json(job);
       } else {
         res.status(400).json({ message: "That job does not exist" });
@@ -91,6 +68,24 @@ router.get("/jobs/:id", (req, res) => {
     .catch((err) => {
       console.log(err);
       res.status(500).json({ error: "Server error" });
+    });
+});
+
+// POST create a new job
+router.post("/jobs", (req, res) => {
+  const job = req.body;
+  // console.log(job);
+  if (isObjectEmpty(job))
+    return res.status(409).json({ error: "Please enter something" });
+
+  // add some validation for the database
+  Jobs.addOne(job)
+    .then((newJob) => {
+      res.status(201).json(newJob);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json(err);
     });
 });
 
@@ -184,21 +179,26 @@ router.put("/jobs/:id", (req, res) => {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
 
-  Jobs.findById(id).then((ids) => {
-    console.log("JOB ids ", ids);
-    if (ids) {
-      Jobs.updateJob(id, changes)
-        .then((job) => {
-          res.status(200).json(changes);
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(404).json({ error: "No change happened..." });
-        });
-    } else {
-      res.status(404).json({ message: `No job with given id: ${id} ` });
-    }
-  });
+  Jobs.findById(id)
+    .then((ids) => {
+      // console.log("JOB ids ", ids);
+      if (ids) {
+        Jobs.updateOne(id, changes)
+          .then((job) => {
+            res.status(200).json(changes);
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(404).json({ error: "No change happened..." });
+          });
+      } else {
+        res.status(404).json({ message: `No job with given id: ${id} ` });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ error: "Server error" });
+    });
   // Users.findById(userId)
   //   .then((u) => {
   //     if (u.id === userId) {
