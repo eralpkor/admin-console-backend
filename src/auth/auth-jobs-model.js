@@ -2,7 +2,7 @@ const db = require("../database/dbConfig");
 
 module.exports = {
   find,
-  addJob,
+  addOne,
   findBy,
   findByCustomerId,
   findByUserId,
@@ -10,7 +10,6 @@ module.exports = {
   findAllJobs,
   findById,
   updateJob,
-  calculateBalance,
   deleteOne,
   findByIdEdit,
   decrementBalance,
@@ -28,30 +27,73 @@ function findAllJobs() {
       "customers.first_name",
       "customers.last_name",
       "users.username as assigned_to",
-      "accounts.job_id as account_id"
+      "accounts.job_id as account_id",
+      "accounts.total as total",
+      "accounts.balance"
     )
     .join("customers", "customers.id", "jobs.customer_id")
     .join("users", "users.id", "jobs.assigned_to")
-    .join("accounts", "accounts.account_id", "jobs.id");
-  // .andWhere("is_deleted", false)
+    .join("accounts", "accounts.job_id", "jobs.id")
+    .andWhere("jobs.is_deleted", false);
 }
 
 function addJob(job) {
-  return db("jobs")
-    .select(
-      "jobs.*",
-      "customers.first_name",
-      "customers.last_name",
-      "users.username as assigned_to",
+  return (
+    db("jobs")
+      .select(
+        "jobs.*",
+        "customers.first_name",
+        "customers.last_name",
+        "users.username as assigned_to"
+        // new shit
+        // "accounts.job_id as account_id",
+        // "accounts.total, as total",
+        // "accounts.balance, as balance"
+      )
+      .join("customers", "customers.id", "jobs.customer_id")
+      .join("users", "users.id", "jobs.assigned_to")
       // new shit
-      "accounts.job_id as account_id"
-    )
-    .join("customers", "customers.id", "jobs.customer_id")
-    .join("users", "users.id", "jobs.assigned_to")
-    .insert(job, "id")
+      // .join("accounts", "jobs.id", "accounts.job_id")
+      .insert(job, "id")
+      .then((ids) => {
+        const [id] = ids;
+        return findById(id);
+      })
+  );
+}
+
+function addOne(job) {
+  return db
+    .transaction(function (t) {
+      return db("jobs")
+        .transacting(t)
+        .select("jobs.*")
+        .insert({
+          job_title: job.job_title,
+          job_description: job.job_description,
+          in_progress: job.in_progress,
+          due_date: job.due_date,
+          customer_id: job.customer_id,
+          assigned_to: job.assigned_to,
+          admin_id: job.admin_id,
+        })
+        .then((response) => {
+          let [id] = response;
+          return db("accounts")
+            .transacting(t)
+            .select("accounts.*")
+            .insert({ balance: job.balance, total: job.total, job_id: id });
+        })
+        .then(t.commit)
+        .catch(t.rollback);
+    })
     .then((ids) => {
+      console.log("transaction succeeded ");
       const [id] = ids;
       return findById(id);
+    })
+    .catch((err) => {
+      console.log("transaction failed", err);
     });
 }
 
@@ -76,7 +118,6 @@ function findById(id) {
 
       // .join("users", "users.id", "jobs.assigned_to")
       .where("id", id)
-
       .first()
   );
 }
@@ -114,32 +155,8 @@ function sortByFieldName(sortByName, direction) {
   // .orderBy("job_title", "asc");
 }
 
-// function findAllJobs() {
-//   return db("jobs")
-//     .select(
-//       "jobs.*",
-//       "customers.first_name",
-//       "customers.last_name",
-//       "users.username"
-//     )
-//     .join("customers", function () {
-//       this.on("customers.id", "=", "jobs.customer_id").orOn(
-//         "customers.assigned_to",
-//         "=",
-//         "users.username"
-//       );
-//     });
-// }
-
 function updateJob(id, changes) {
   return db("jobs").where({ id }).update(changes, "*");
-}
-
-function calculateBalance(id) {
-  return db("jobs")
-    .where({ id })
-    .select()
-    .sum({ amount_paid: ["amount_paid_1", "amount_paid_2", "amount_paid_3"] });
 }
 
 function deleteOne(id, update) {
