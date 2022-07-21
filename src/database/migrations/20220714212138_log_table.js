@@ -9,7 +9,6 @@ exports.up = function (knex) {
     tbl.timestamp("updated_at").defaultTo(knex.fn.now());
     tbl.string("notes", 255);
     tbl.integer("updated_by").unsigned().references("users.id");
-    tbl.integer("updated_by_admin").unsigned().references("admins.id");
   });
 };
 
