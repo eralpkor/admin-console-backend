@@ -65,6 +65,7 @@ router.get("/users", (req, res, next) => {
   // }
   Users.find()
     .then((users) => {
+      console.log(users);
       // res.status(200).json({ users: users });
       res.setHeader(`Content-Range`, users.length);
       res.status(200).json(users);
