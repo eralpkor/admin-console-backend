@@ -18,6 +18,7 @@ const createFakeChanges = () => ({
   account_id: randomIds(),
   payment_type: "none",
   amount_paid: 0,
+  check_number: "1234567",
 });
 
 exports.seed = async function (knex) {
