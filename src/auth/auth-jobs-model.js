@@ -9,10 +9,9 @@ module.exports = {
   sortByFieldName,
   findAllJobs,
   findById,
-  updateJob,
+  updateOne,
   deleteOne,
-  findByIdEdit,
-  decrementBalance,
+  // findByIdEdit,
 };
 
 // ********** JOB related model from here *****************
@@ -29,37 +28,17 @@ function findAllJobs() {
       "users.username as assigned_to",
       "accounts.job_id as account_id",
       "accounts.total as total",
-      "accounts.balance"
+      "accounts.balance",
+      "account_changes.amount_paid as payment",
+      "account_changes.payment_type",
+      "account_changes.check_number",
+      "account_changes.account_id"
     )
     .join("customers", "customers.id", "jobs.customer_id")
     .join("users", "users.id", "jobs.assigned_to")
     .join("accounts", "accounts.job_id", "jobs.id")
+    .join("account_changes", "account_changes.account_id", "accounts.job_id")
     .andWhere("jobs.is_deleted", false);
-}
-
-function addJob(job) {
-  return (
-    db("jobs")
-      .select(
-        "jobs.*",
-        "customers.first_name",
-        "customers.last_name",
-        "users.username as assigned_to"
-        // new shit
-        // "accounts.job_id as account_id",
-        // "accounts.total, as total",
-        // "accounts.balance, as balance"
-      )
-      .join("customers", "customers.id", "jobs.customer_id")
-      .join("users", "users.id", "jobs.assigned_to")
-      // new shit
-      // .join("accounts", "jobs.id", "accounts.job_id")
-      .insert(job, "id")
-      .then((ids) => {
-        const [id] = ids;
-        return findById(id);
-      })
-  );
 }
 
 function addOne(job) {
@@ -81,8 +60,21 @@ function addOne(job) {
           let [id] = response;
           return db("accounts")
             .transacting(t)
-            .select("accounts.*")
-            .insert({ balance: job.balance, total: job.total, job_id: id });
+            .select()
+            .insert({
+              job_id: id,
+              balance: job.total - job.amount_paid,
+              total: job.total,
+            });
+        })
+        .then((response) => {
+          let [id] = response;
+          return db("account_changes").transacting(t).select().insert({
+            account_id: id,
+            payment_type: job.payment_type,
+            check_number: job.check_number,
+            amount_paid: job.amount_paid,
+          });
         })
         .then(t.commit)
         .catch(t.rollback);
@@ -97,29 +89,89 @@ function addOne(job) {
     });
 }
 
-function findByIdEdit(id) {
+function findById(id) {
   return db("jobs")
-    .select("jobs.*", "comments.*")
-    .join("comments", "comments.job_id", "=", "jobs.id")
-    .where("jobs.id", "=", id)
+    .select(
+      "jobs.*",
+      "customers.first_name",
+      "customers.last_name",
+      "users.username",
+      "accounts.total",
+      "accounts.balance",
+      "account_changes.check_number",
+      "account_changes.amount_paid",
+      "account_changes.payment_type"
+    )
+    .join("customers", "customers.id", "=", "jobs.customer_id")
+    .join("users", "users.id", "jobs.assigned_to")
+    .join("accounts", "accounts.job_id", "jobs.id")
+    .join("account_changes", "accounts.job_id", "account_changes.account_id")
+    .where("jobs.id", id)
     .first();
 }
 
-function findById(id) {
-  return (
-    db("jobs")
-      .select()
-      // "jobs.*"
-      // "customers.first_name",
-      // "customers.last_name",
-      // "users.username"
-
-      // .join("customers", "customers.id", "jobs.customer_id")
-
-      // .join("users", "users.id", "jobs.assigned_to")
-      .where("id", id)
-      .first()
-  );
+function updateOne(id, job) {
+  console.log("What id id ", id, job);
+  return db
+    .transaction(function (t) {
+      return (
+        db("jobs")
+          .where({ id })
+          .transacting(t)
+          // .select("jobs.*")
+          .update(
+            {
+              job_title: job.job_title,
+              job_description: job.job_description,
+              in_progress: job.in_progress,
+              due_date: job.due_date,
+              customer_id: job.customer_id,
+              assigned_to: job.assigned_to,
+              admin_id: job.admin_id,
+            },
+            ["id"]
+          )
+          .then((response) => {
+            let [id] = response;
+            return (
+              db("accounts")
+                .transacting(t)
+                // .select()
+                .update(
+                  {
+                    job_id: id,
+                    balance: job.total - job.amount_paid,
+                    total: job.total,
+                  },
+                  ["id"]
+                )
+            );
+          })
+          .then((response) => {
+            let [id] = response;
+            console.log("What is response id ", id);
+            return db("account_changes").transacting(t).select().update(
+              {
+                account_id: id,
+                payment_type: job.payment_type,
+                check_number: job.check_number,
+                amount_paid: job.amount_paid,
+              },
+              ["id"]
+            );
+          })
+          .then(t.commit)
+          .catch(t.rollback)
+      );
+    })
+    .then((ids) => {
+      console.log("transaction succeeded ");
+      const [id] = ids;
+      return findById(id);
+    })
+    .catch((err) => {
+      console.log("transaction failed", err);
+    });
 }
 
 function findBy(filter) {
@@ -131,6 +183,7 @@ function findBy(filter) {
       .first()
   );
 }
+
 // Get jobs by a single customer.
 function findByCustomerId(customer_id) {
   return db("jobs")
@@ -163,25 +216,27 @@ function deleteOne(id, update) {
   return db("jobs").where({ id }).del();
 }
 
-function decrementBalance(id) {
-  return db("jobs").select("balance");
-  // return db("jobs")
-  //   .select(db.raw("select balance - amount_paid_1"))
-  //   .then(function (resp) {
-  //     console.log(resp);
-  //   });
-  // return db("jobs").select(
-  // "balance",
-  // "-",
-  // "amount_paid_1",
-  // "-",
-  // "amount_paid_2",
-  // "-",
-  // "amount_paid_3"
-  // );
-  // .decrement({
-  //   balance: 10,
-  //   // balance: "amount_paid_2",
-  //   // balance: "amount_paid_3",
-  // });
-}
+// function addJob(job) {
+//   return (
+//     db("jobs")
+//       .select(
+//         "jobs.*",
+//         "customers.first_name",
+//         "customers.last_name",
+//         "users.username as assigned_to"
+//         // new shit
+//         // "accounts.job_id as account_id",
+//         // "accounts.total, as total",
+//         // "accounts.balance, as balance"
+//       )
+//       .join("customers", "customers.id", "jobs.customer_id")
+//       .join("users", "users.id", "jobs.assigned_to")
+//       // new shit
+//       // .join("accounts", "jobs.id", "accounts.job_id")
+//       .insert(job, "id")
+//       .then((ids) => {
+//         const [id] = ids;
+//         return findById(id);
+//       })
+//   );
+// }
