@@ -6,7 +6,6 @@ const Accounts = require("./auth-accounts-model");
 require("dotenv").config();
 
 function isObjectEmpty(obj) {
-  console.log(typeof obj);
   return Object.keys(obj).length === 0;
 }
 
@@ -69,13 +68,11 @@ router.get("/accounts/:id", (req, res) => {
 
 router.post("/accounts", (req, res) => {
   const account = req.body;
-  console.log(account);
   if (isObjectEmpty(account)) {
     return res.status(409).json({ error: "Please enter something" });
   }
   Accounts.updateOne(account)
     .then((newAccount) => {
-      console.log(newAccount);
       res.status(201).json(newAccount);
     })
     .catch((error) => {
@@ -93,11 +90,9 @@ router.put("/accounts/:id", (req, res) => {
 
   Accounts.findById(id)
     .then((ids) => {
-      console.log(ids);
       if (ids) {
         Accounts.updateOne(id, changes)
           .then((acc) => {
-            console.log(acc, changes);
             res.status(200).json(changes);
           })
           .catch((error) => {
