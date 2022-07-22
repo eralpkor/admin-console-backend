@@ -29,15 +29,15 @@ function findAllJobs() {
       "accounts.job_id as account_id",
       "accounts.total as total",
       "accounts.balance",
-      "account_changes.amount_paid as payment",
-      "account_changes.payment_type",
-      "account_changes.check_number",
-      "account_changes.account_id"
+      "payments.amount_paid as payment",
+      "payments.payment_type",
+      "payments.check_number",
+      "payments.account_id"
     )
     .join("customers", "customers.id", "jobs.customer_id")
     .join("users", "users.id", "jobs.assigned_to")
     .join("accounts", "accounts.job_id", "jobs.id")
-    .join("account_changes", "account_changes.account_id", "accounts.job_id")
+    .join("payments", "payments.account_id", "accounts.job_id")
     .andWhere("jobs.is_deleted", false);
 }
 
@@ -69,7 +69,7 @@ function addOne(job) {
         })
         .then((response) => {
           let [id] = response;
-          return db("account_changes").transacting(t).select().insert({
+          return db("payments").transacting(t).select().insert({
             account_id: id,
             payment_type: job.payment_type,
             check_number: job.check_number,
@@ -98,20 +98,20 @@ function findById(id) {
       "users.username",
       "accounts.total",
       "accounts.balance",
-      "account_changes.check_number",
-      "account_changes.amount_paid",
-      "account_changes.payment_type"
+      "payments.check_number",
+      "payments.amount_paid",
+      "payments.payment_type"
     )
     .join("customers", "customers.id", "=", "jobs.customer_id")
     .join("users", "users.id", "jobs.assigned_to")
     .join("accounts", "accounts.job_id", "jobs.id")
-    .join("account_changes", "accounts.job_id", "account_changes.account_id")
+    .join("payments", "accounts.job_id", "payments.account_id")
     .where("jobs.id", id)
     .first();
 }
 
 function updateOne(id, job) {
-  console.log("What id id ", id, job);
+  // console.log("What id and job ", id);
   return db
     .transaction(function (t) {
       return (
@@ -119,46 +119,45 @@ function updateOne(id, job) {
           .where({ id })
           .transacting(t)
           // .select("jobs.*")
-          .update(
-            {
-              job_title: job.job_title,
-              job_description: job.job_description,
-              in_progress: job.in_progress,
-              due_date: job.due_date,
-              customer_id: job.customer_id,
-              assigned_to: job.assigned_to,
-              admin_id: job.admin_id,
-            },
-            ["id"]
-          )
+          // .update(
+          //   {
+          //     job_title: job.job_title,
+          //     job_description: job.job_description,
+          //     in_progress: job.in_progress,
+          //     due_date: job.due_date,
+          //     customer_id: job.customer_id,
+          //     assigned_to: job.assigned_to,
+          //     admin_id: job.admin_id,
+          //   },
+          //   ["id"]
+          // )
           .then((response) => {
-            let [id] = response;
-            return (
-              db("accounts")
-                .transacting(t)
-                // .select()
-                .update(
-                  {
-                    job_id: id,
-                    balance: job.total - job.amount_paid,
-                    total: job.total,
-                  },
-                  ["id"]
-                )
-            );
+            let id = response[0].id;
+            // console.log("whats response ", id);
+            return db("accounts").transacting(t);
+            // .select()
+            // .update(
+            //   {
+            //     job_id: id,
+            //     balance: job.total - job.amount_paid,
+            //     total: job.total,
+            //   },
+            //   ["id"]
+            // )
           })
           .then((response) => {
-            let [id] = response;
+            let id = response;
             console.log("What is response id ", id);
-            return db("account_changes").transacting(t).select().update(
-              {
-                account_id: id,
-                payment_type: job.payment_type,
-                check_number: job.check_number,
-                amount_paid: job.amount_paid,
-              },
-              ["id"]
-            );
+            return db("payments").transacting(t).select();
+            // .update(
+            //   {
+            //     account_id: id,
+            //     payment_type: job.payment_type,
+            //     check_number: job.check_number,
+            //     amount_paid: job.amount_paid,
+            //   },
+            //   ["id"]
+            // );
           })
           .then(t.commit)
           .catch(t.rollback)
@@ -167,7 +166,7 @@ function updateOne(id, job) {
     .then((ids) => {
       console.log("transaction succeeded ");
       const [id] = ids;
-      return findById(id);
+      return findById(ids);
     })
     .catch((err) => {
       console.log("transaction failed", err);
