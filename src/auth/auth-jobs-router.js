@@ -2,31 +2,9 @@ const router = require("express").Router();
 const jwt = require("./middleware/jwtAccess");
 const Users = require("./auth-model");
 const Jobs = require("./auth-jobs-model");
+const Helpers = require("./middleware/helpers");
 require("dotenv").config();
 
-function isObjectEmpty(obj) {
-  return Object.keys(obj).length === 0;
-}
-
-function sortAsc(arr, columnName) {
-  return arr.sort((a, b) => {
-    if (typeof a[columnName] === "number") {
-      return a[columnName] - b[columnName];
-    } else {
-      return a[columnName].localeCompare(b[columnName]);
-    }
-  });
-}
-
-function sortDesc(arr, columnName) {
-  return arr.sort((a, b) => {
-    if (typeof a[columnName] === "number") {
-      return b[columnName] - a[columnName];
-    } else {
-      return b[columnName].localeCompare(a[columnName]);
-    }
-  });
-}
 // GET all jobs no-filter
 // http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
 router.get("/jobs", (req, res) => {
@@ -40,10 +18,10 @@ router.get("/jobs", (req, res) => {
       let sortedJobs = jobs;
 
       if (order === "ASC") {
-        sortedJobs = sortAsc(jobs, columnName);
+        sortedJobs = Helpers.sortAsc(jobs, columnName);
       }
       if (order === "DESC") {
-        sortedJobs = sortDesc(jobs, columnName);
+        sortedJobs = Helpers.sortDesc(jobs, columnName);
       }
       res.status(200).json(sortedJobs);
     })
@@ -74,8 +52,7 @@ router.get("/jobs/:id", (req, res) => {
 // POST create a new job
 router.post("/jobs", (req, res) => {
   const job = req.body;
-  // console.log(job);
-  if (isObjectEmpty(job))
+  if (Helpers.isObjectEmpty(job))
     return res.status(409).json({ error: "Please enter something" });
 
   // add some validation for the database
@@ -92,7 +69,6 @@ router.post("/jobs", (req, res) => {
 // GET jobs by single customer by id.
 router.get("/jobs/customer-job/:id", (req, res) => {
   const id = req.params.id;
-  console.log(id);
   Jobs.findByCustomerId(id)
     .then((jobs) => {
       if (jobs.length) {
@@ -174,7 +150,7 @@ router.put("/jobs/:id", (req, res) => {
   // const userId = req.user.subject;
   const changes = req.body;
   const { id } = req.params;
-  console.log(id);
+  // console.log(id);
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
@@ -185,7 +161,8 @@ router.put("/jobs/:id", (req, res) => {
       if (ids) {
         Jobs.updateOne(id, changes)
           .then((job) => {
-            res.status(200).json(changes);
+            // console.log("what is job ", job);
+            res.status(200).json(job);
           })
           .catch((err) => {
             console.log(err);
@@ -233,7 +210,6 @@ router.delete("/jobs/:id", (req, res) => {
 
   Jobs.findById(id)
     .then((job) => {
-      console.log(job);
       if (job) {
         Jobs.deleteOne(id)
           .then((job) => {
