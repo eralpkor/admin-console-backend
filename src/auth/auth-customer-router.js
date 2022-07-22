@@ -21,10 +21,8 @@ router.get("/customers", (req, res) => {
 router.get("/customers/:id", (req, res) => {
   const { id } = req.params;
 
-  console.log("what is id ", id);
   Customers.getCustomer(id)
     .then((customer) => {
-      console.log("whats cust ", customer);
       if (customer) {
         res.status(200).json(customer);
       } else {
@@ -48,13 +46,11 @@ router.put("/customers/:id", (req, res) => {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
 
-  console.log(id);
   Customers.findByCustomerId(id)
     .then((c) => {
       if (c.id == id) {
         Customers.updateCustomer(id, changes)
           .then((customer) => {
-            console.log("edit by id cust ", customer);
             res.status(200).json(customer);
           })
           .catch((error) => {
@@ -74,10 +70,8 @@ router.put("/customers/:id", (req, res) => {
 // POST Create customer
 router.post("/customers", validateCustomer, (req, res) => {
   const customer = req.body;
-  console.log("Customer POST ", customer);
   Customers.addCustomer(customer)
     .then((c) => {
-      console.log("new customer", c);
       res.status(201).json(c);
     })
     .catch((error) => {
