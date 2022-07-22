@@ -14,6 +14,8 @@ module.exports = {
   // findByIdEdit,
 };
 
+var timestamp = new Date().toLocaleDateString();
+
 // ********** JOB related model from here *****************
 // Find all jobs and return
 function find() {
@@ -55,6 +57,7 @@ function addOne(job) {
           customer_id: job.customer_id,
           assigned_to: job.assigned_to,
           admin_id: job.admin_id,
+          created_at: timestamp,
         })
         .then((response) => {
           let [id] = response;
@@ -80,8 +83,8 @@ function addOne(job) {
         .catch(t.rollback);
     })
     .then((ids) => {
-      console.log("transaction succeeded ");
       const [id] = ids;
+      console.log("transaction succeeded ", id);
       return findById(id);
     })
     .catch((err) => {
@@ -111,62 +114,47 @@ function findById(id) {
 }
 
 function updateOne(id, job) {
-  // console.log("What id and job ", id);
   return db
     .transaction(function (t) {
-      return (
-        db("jobs")
-          .where({ id })
-          .transacting(t)
-          // .select("jobs.*")
-          // .update(
-          //   {
-          //     job_title: job.job_title,
-          //     job_description: job.job_description,
-          //     in_progress: job.in_progress,
-          //     due_date: job.due_date,
-          //     customer_id: job.customer_id,
-          //     assigned_to: job.assigned_to,
-          //     admin_id: job.admin_id,
-          //   },
-          //   ["id"]
-          // )
-          .then((response) => {
-            let id = response[0].id;
-            // console.log("whats response ", id);
-            return db("accounts").transacting(t);
-            // .select()
-            // .update(
-            //   {
-            //     job_id: id,
-            //     balance: job.total - job.amount_paid,
-            //     total: job.total,
-            //   },
-            //   ["id"]
-            // )
-          })
-          .then((response) => {
-            let id = response;
-            console.log("What is response id ", id);
-            return db("payments").transacting(t).select();
-            // .update(
-            //   {
-            //     account_id: id,
-            //     payment_type: job.payment_type,
-            //     check_number: job.check_number,
-            //     amount_paid: job.amount_paid,
-            //   },
-            //   ["id"]
-            // );
-          })
-          .then(t.commit)
-          .catch(t.rollback)
-      );
+      return db("jobs")
+        .where({ id })
+        .transacting(t)
+        .select()
+        .update({
+          job_title: job.job_title,
+          job_description: job.job_description,
+          in_progress: job.in_progress,
+          due_date: job.due_date,
+          customer_id: job.customer_id,
+          assigned_to: job.assigned_to,
+          admin_id: job.admin_id,
+          updated_at: timestamp,
+        })
+        .then(() => {
+          return db("accounts")
+            .transacting(t)
+            .select()
+            .where({ id })
+            .update({
+              job_id: id,
+              balance: job.total - job.amount_paid,
+              total: job.total,
+            });
+        })
+        .then(() => {
+          return db("payments").transacting(t).select().where({ id }).update({
+            account_id: id,
+            payment_type: job.payment_type,
+            check_number: job.check_number,
+            amount_paid: job.amount_paid,
+          });
+        })
+        .then(t.commit)
+        .catch(t.rollback);
     })
-    .then((ids) => {
-      console.log("transaction succeeded ");
-      const [id] = ids;
-      return findById(ids);
+    .then(() => {
+      console.log("transaction succeeded ", id);
+      return findById(id);
     })
     .catch((err) => {
       console.log("transaction failed", err);
