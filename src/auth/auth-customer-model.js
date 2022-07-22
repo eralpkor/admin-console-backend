@@ -48,7 +48,6 @@ function addCustomer(params) {
 }
 
 function findBy(filter) {
-  console.log(filter);
   return db("customers").where(filter);
 }
 
