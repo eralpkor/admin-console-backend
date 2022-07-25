@@ -7,6 +7,7 @@ const jobsRouter = require("../auth/auth-jobs-router");
 const authenticate = require("../auth/middleware/auth-middleware");
 const customerRouter = require("../auth/auth-customer-router");
 const accountsRouter = require("../auth/auth-accounts-router");
+const paymentsRouter = require("../auth/auth-payments-router");
 const server = express();
 
 let corsOptions = {
@@ -27,6 +28,7 @@ server.use(express.json());
 //   );
 //   next();
 // });
+server.use("/api", paymentsRouter);
 server.use("/api", accountsRouter);
 server.use("/api", jobsRouter);
 server.use("/api", customerRouter);
