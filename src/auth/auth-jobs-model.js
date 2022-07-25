@@ -22,25 +22,27 @@ function find() {
   return db("jobs");
 }
 function findAllJobs() {
-  return db("jobs")
-    .select(
-      "jobs.*",
-      "customers.first_name",
-      "customers.last_name",
-      "users.username as assigned_to",
-      "accounts.job_id as account_id",
-      "accounts.total as total",
-      "accounts.balance",
-      "payments.amount_paid as payment",
-      "payments.payment_type",
-      "payments.check_number",
-      "payments.account_id"
-    )
-    .join("customers", "customers.id", "jobs.customer_id")
-    .join("users", "users.id", "jobs.assigned_to")
-    .join("accounts", "accounts.job_id", "jobs.id")
-    .join("payments", "payments.account_id", "accounts.job_id")
-    .andWhere("jobs.is_deleted", false);
+  return (
+    db("jobs")
+      .select(
+        "jobs.*",
+        "customers.first_name",
+        "customers.last_name",
+        "users.username as assigned_to"
+        // "accounts.job_id as account_id"
+        // "accounts.total as total",
+        // "accounts.balance"
+        // "payments.amount_paid as payment",
+        // "payments.payment_type",
+        // "payments.check_number",
+        // "payments.account_id"
+      )
+      .join("customers", "customers.id", "jobs.customer_id")
+      .join("users", "users.id", "jobs.assigned_to")
+      // .join("accounts", "accounts.job_id", "jobs.id")
+      // .join("payments", "payments.account_id", "accounts.job_id")
+      .andWhere("jobs.is_deleted", false)
+  );
 }
 
 function addOne(job) {
@@ -105,7 +107,7 @@ function findById(id) {
       "payments.amount_paid",
       "payments.payment_type"
     )
-    .join("customers", "customers.id", "=", "jobs.customer_id")
+    .join("customers", "customers.id", "jobs.customer_id")
     .join("users", "users.id", "jobs.assigned_to")
     .join("accounts", "accounts.job_id", "jobs.id")
     .join("payments", "accounts.job_id", "payments.account_id")
