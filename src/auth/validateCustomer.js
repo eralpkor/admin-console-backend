@@ -4,7 +4,6 @@ module.exports = async (req, res, next) => {
   const errors = [];
 
   function validateCustomer(user) {
-    console.log(user);
     !user.first_name && errors.push({ first_name: "required" });
     !user.last_name && errors.push({ last_name: "required" });
     !user.email && errors.push({ email: "required" });
