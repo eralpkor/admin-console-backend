@@ -26,10 +26,12 @@ function findById(id) {
       "accounts.*",
       "customers.first_name",
       "customers.last_name",
-      "jobs.id as job"
+      "jobs.id as job",
+      "payments.amount_paid as payment"
     )
     .join("jobs", "jobs.id", "accounts.job_id")
     .join("customers", "customers.id", "jobs.customer_id")
+    .join("payments", "payments.account_id", "accounts.job_id")
     .where("job_id", id)
     .first();
 }
