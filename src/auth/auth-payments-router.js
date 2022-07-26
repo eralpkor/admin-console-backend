@@ -44,4 +44,32 @@ router.get("/payments/:id", (req, res) => {
     });
 });
 
+router.post("/payments", (req, res) => {
+  const body = req.body;
+  // this is account id not payment id
+  const { id } = req.params;
+
+  if (Helpers.isObjectEmpty(body))
+    return res.status(409).json({ error: "Please enter something" });
+
+  Payments.findById(id)
+    .then((p) => {
+      console.log(p);
+      if (p) {
+        Payments.addOne(body)
+          .then((p) => {
+            res.status(201).json(p);
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(500).json(err);
+          });
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({ error: "Server error" });
+    });
+});
+
 module.exports = router;
