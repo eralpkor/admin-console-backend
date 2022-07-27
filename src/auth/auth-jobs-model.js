@@ -22,27 +22,19 @@ function find() {
   return db("jobs");
 }
 function findAllJobs() {
-  return (
-    db("jobs")
-      .select(
-        "jobs.*",
-        "customers.first_name",
-        "customers.last_name",
-        "users.username as assigned_to"
-        // "accounts.job_id as account_id"
-        // "accounts.total as total",
-        // "accounts.balance"
-        // "payments.amount_paid as payment",
-        // "payments.payment_type",
-        // "payments.check_number",
-        // "payments.account_id"
-      )
-      .join("customers", "customers.id", "jobs.customer_id")
-      .join("users", "users.id", "jobs.assigned_to")
-      // .join("accounts", "accounts.job_id", "jobs.id")
-      // .join("payments", "payments.account_id", "accounts.job_id")
-      .andWhere("jobs.is_deleted", false)
-  );
+  return db("jobs")
+    .select(
+      "jobs.*",
+      "customers.first_name",
+      "customers.last_name",
+      "users.username as assigned_to",
+      "accounts.total as total",
+      "accounts.balance"
+    )
+    .join("customers", "customers.id", "jobs.customer_id")
+    .join("users", "users.id", "jobs.assigned_to")
+    .join("accounts", "accounts.job_id", "jobs.id")
+    .andWhere("jobs.is_deleted", false);
 }
 
 function addOne(job) {
@@ -103,6 +95,7 @@ function findById(id) {
       "users.username",
       "accounts.total",
       "accounts.balance",
+      "accounts.job_id",
       "payments.check_number",
       "payments.amount_paid",
       "payments.payment_type"
@@ -138,14 +131,12 @@ function updateOne(id, job) {
             .select()
             .where({ id })
             .update({
-              job_id: id,
-              balance: job.total - job.amount_paid,
               total: job.total,
+              balance: job.total - job.amount_paid,
             });
         })
         .then(() => {
           return db("payments").transacting(t).select().where({ id }).update({
-            account_id: id,
             payment_type: job.payment_type,
             check_number: job.check_number,
             amount_paid: job.amount_paid,
