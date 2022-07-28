@@ -1,48 +1,31 @@
 const router = require("express").Router();
 const jwt = require("./middleware/jwtAccess");
-const Users = require("./auth-model");
-const Jobs = require("./auth-jobs-model");
 const Accounts = require("./auth-accounts-model");
+const Helpers = require("./middleware/helpers");
 require("dotenv").config();
 
-function isObjectEmpty(obj) {
-  return Object.keys(obj).length === 0;
-}
-
-function sortAsc(arr, columnName) {
-  return arr.sort((a, b) => {
-    if (typeof a[columnName] === "number") {
-      return a[columnName] - b[columnName];
-    } else {
-      return a[columnName].localeCompare(b[columnName]);
+router.get("/accounts", async (req, res) => {
+  let columnName, order, columnId, id;
+  if (req.query.sort) {
+    columnName = await JSON.parse(req.query.sort)[0];
+    order = await JSON.parse(req.query.sort)[1];
+  }
+  if (req.query.filter) {
+    columnId = await JSON.parse(req.query.filter);
+    if (columnId.id) {
+      id = columnId.id[0];
     }
-  });
-}
-
-function sortDesc(arr, columnName) {
-  return arr.sort((a, b) => {
-    if (typeof a[columnName] === "number") {
-      return b[columnName] - a[columnName];
-    } else {
-      return b[columnName].localeCompare(a[columnName]);
-    }
-  });
-}
-// http://localhost:5000/api/accounts?filter={}&range=[0,9]&sort=["id","DESC"]
-router.get("/accounts", (req, res) => {
-  const columnName = JSON.parse(req.query.sort)[0];
-  const order = JSON.parse(req.query.sort)[1];
+  }
 
   Accounts.find()
     .then((accounts) => {
       res.setHeader(`Content-Range`, accounts.length);
       let sorted = accounts;
-
       if (order === "ASC") {
-        sorted = sortAsc(accounts, columnName);
+        sorted = Helpers.sortAsc(accounts, columnName);
       }
       if (order === "DESC") {
-        sorted = sortDesc(accounts, columnName);
+        sorted = Helpers.sortDesc(accounts, columnName);
       }
       res.status(200).json(sorted);
     })
@@ -68,7 +51,7 @@ router.get("/accounts/:id", (req, res) => {
 
 router.post("/accounts", (req, res) => {
   const account = req.body;
-  if (isObjectEmpty(account)) {
+  if (Helpers.isObjectEmpty(account)) {
     return res.status(409).json({ error: "Please enter something" });
   }
   Accounts.updateOne(account)
