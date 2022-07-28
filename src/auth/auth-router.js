@@ -6,6 +6,7 @@ const validateLogin = require("./validLoginUser");
 const bcrypt = require("bcryptjs");
 const jwt = require("./middleware/jwtAccess");
 const Users = require("./auth-model");
+const Helpers = require("./middleware/helpers");
 
 // POST /api/auth/login login user - FUNCTIONAL
 router.post("/authenticate", validateLogin, (req, res) => {
@@ -41,10 +42,8 @@ router.post("/users", validateNewUser, (req, res) => {
   const user = req.body;
   const hash = bcrypt.hashSync(user.password, HashFactor);
   user.password = hash;
-  console.log("New user body object ", user);
   Users.addUser(user)
     .then((newUser) => {
-      console.log(newUser);
       const token = jwt.generateToken(newUser);
       res.status(201).json(newUser);
     })
@@ -56,19 +55,30 @@ router.post("/users", validateNewUser, (req, res) => {
 
 // GET display all of the users
 // IMPORTANT IMPLEMENT SECURITY
-router.get("/users", (req, res, next) => {
-  // if (!req.user.isAdmin) {
-  //   res
-  //     .status(401)
-  //     .json({ message: "You are not authorized to see this page..." });
-  //   return res.send();
-  // }
+router.get("/users", async (req, res) => {
+  let columnName, order, columnId, id;
+  if (req.query.sort) {
+    columnName = await JSON.parse(req.query.sort)[0];
+    order = await JSON.parse(req.query.sort)[1];
+  }
+  if (req.query.filter) {
+    columnId = await JSON.parse(req.query.filter);
+    if (columnId.id) {
+      id = columnId.id[0];
+    }
+  }
   Users.find()
     .then((users) => {
-      console.log(users);
-      // res.status(200).json({ users: users });
       res.setHeader(`Content-Range`, users.length);
-      res.status(200).json(users);
+
+      let sorted = users;
+      if (order === "ASC") {
+        sorted = Helpers.sortAsc(users, columnName);
+      }
+      if (order === "DESC") {
+        sorted = Helpers.sortDesc(users, columnName);
+      }
+      res.status(200).json(sorted);
     })
     .catch((err) => {
       console.log(err);
@@ -90,11 +100,9 @@ router.get("/filter", jwt.checkToken(), (req, res) => {
   Users.findBy(filters)
     .then((user) => {
       if (user.length > 0) {
-        console.log("We found user", user);
         res.status(200).json({ user: user });
       } else {
         res.status(404).json({ message: "User does not exist..." });
-        console.log("No user");
       }
     })
     .catch((err) => {
@@ -112,10 +120,8 @@ router.get("/users/:id", (req, res) => {
   //     .json({ message: "You are not authorized to see this page..." });
   //   return res.send();
   // }
-  console.log(id);
   Users.getUser(id)
     .then((user) => {
-      console.log("By id ", user);
       if (user) {
         res.status(200).json(user);
       } else {
@@ -153,7 +159,7 @@ router.put("/users/:id", (req, res) => {
 
         Users.editById(userId, changes)
           .then((user) => {
-            console.log("edit by id ", user);
+            console.log(user);
             res.status(200).json(user);
           })
           .catch((err) => {
@@ -178,11 +184,9 @@ router.delete("/users/:id", (req, res) => {
 
   Users.findById(id)
     .then((user) => {
-      console.log(user);
       if (user) {
         Users.deleteOne(id)
           .then((user) => {
-            console.log(user);
             res.status(201).json(user);
           })
           .catch((error) => {
