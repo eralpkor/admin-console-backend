@@ -7,9 +7,18 @@ require("dotenv").config();
 
 // GET all jobs no-filter
 // http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
-router.get("/jobs", (req, res) => {
-  const columnName = JSON.parse(req.query.sort)[0];
-  const order = JSON.parse(req.query.sort)[1];
+router.get("/jobs", async (req, res) => {
+  let columnName, order, columnId, id;
+  if (req.query.sort) {
+    columnName = await JSON.parse(req.query.sort)[0];
+    order = await JSON.parse(req.query.sort)[1];
+  }
+  if (req.query.filter) {
+    columnId = await JSON.parse(req.query.filter);
+    if (columnId.id) {
+      id = columnId.id[0];
+    }
+  }
 
   Jobs.findAllJobs()
     .then((jobs) => {
