@@ -4,7 +4,6 @@ module.exports = async (req, res, next) => {
   const errors = [];
 
   function validateNewUser(user) {
-    console.log(user);
     !user.username && errors.push({ username: "required" });
     !user.password && errors.push({ password: "required" });
     !user.email && errors.push({ email: "required" });
