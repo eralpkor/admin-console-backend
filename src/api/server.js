@@ -8,6 +8,7 @@ const authenticate = require("../auth/middleware/auth-middleware");
 const customerRouter = require("../auth/auth-customer-router");
 const accountsRouter = require("../auth/auth-accounts-router");
 const paymentsRouter = require("../auth/auth-payments-router");
+const commentsRouter = require("../auth/auth-comments-router");
 const server = express();
 
 let corsOptions = {
@@ -28,6 +29,7 @@ server.use(express.json());
 //   );
 //   next();
 // });
+server.use("/api", commentsRouter);
 server.use("/api", paymentsRouter);
 server.use("/api", accountsRouter);
 server.use("/api", jobsRouter);
