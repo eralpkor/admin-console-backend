@@ -46,5 +46,32 @@ exports.seed = async function (knex) {
       role_id: 3,
       is_deleted: false,
     },
+    {
+      username: "johnathan",
+      password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
+      first_name: "Jon",
+      last_name: "Got",
+      email: "John@gmail.com",
+      role_id: 3,
+      is_deleted: false,
+    },
+    {
+      username: "kai_kor",
+      password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
+      first_name: "Kai",
+      last_name: "Kor",
+      email: "kai@gmail.com",
+      role_id: 3,
+      is_deleted: false,
+    },
+    {
+      username: "norman",
+      password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
+      first_name: "Norman",
+      last_name: "Kor",
+      email: "norman1@gmail.com",
+      role_id: 3,
+      is_deleted: false,
+    },
   ]);
 };
