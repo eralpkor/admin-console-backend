@@ -67,7 +67,7 @@ router.post("/accounts", (req, res) => {
 router.put("/accounts/:id", (req, res) => {
   const changes = req.body;
   const { id } = req.params;
-  if (isObjectEmpty(changes)) {
+  if (Helpers.isObjectEmpty(changes)) {
     return res.status(409).json({ error: "Please enter something" });
   }
 
