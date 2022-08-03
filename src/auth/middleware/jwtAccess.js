@@ -4,11 +4,11 @@ require("dotenv").config();
 // generate new token
 const generateToken = (user) => {
   const JWT_SECRET = process.env.JWT_SECRET;
-
   const payload = {
     subject: user.id,
     username: user.username,
-    isAdmin: user.is_admin,
+    role: user.role,
+    role_id: user.role_id,
   };
   const options = {
     expiresIn: "1d",
