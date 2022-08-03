@@ -26,6 +26,6 @@ exports.seed = async function (knex) {
   for (let i = 0; i < 20; i++) {
     fakeChanges.push(createFakeChanges());
   }
-  await knex("account_changes").del();
-  await knex("account_changes").insert(fakeChanges);
+  await knex("payments").del();
+  await knex("payments").insert(fakeChanges);
 };
