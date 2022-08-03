@@ -1,8 +1,10 @@
 const router = require("express").Router();
 const jwt = require("./middleware/jwtAccess");
 const Comments = require("./auth-comments-model");
+const Helpers = require("./middleware/helpers");
 require("dotenv").config();
 
+// All comments
 router.get("/comments", async (req, res) => {
   let columnName, order, columnId, id;
   if (req.query.sort) {
@@ -33,6 +35,23 @@ router.get("/comments", async (req, res) => {
     .catch((error) => {
       console.log(error);
       res.status(500).json({ error: "Cannot get comments" });
+    });
+});
+
+// comments by jobId
+router.post("/comments", async (req, res) => {
+  const body = req.body;
+  if (Helpers.isObjectEmpty(body))
+    return res.status(409).json({ error: "Please enter something" });
+
+  Comments.addOne(body)
+    .then((comment) => {
+      console.log("Do we get comments ", comment);
+      res.status(201).json(comment);
+    })
+    .catch((error) => {
+      console.log("Comment POST error ", error);
+      res.status(500).json("server error ", error);
     });
 });
 
