@@ -29,12 +29,13 @@ server.use(express.json());
 //   );
 //   next();
 // });
-server.use("/api", commentsRouter);
-server.use("/api", paymentsRouter);
-server.use("/api", accountsRouter);
-server.use("/api", jobsRouter);
-server.use("/api", customerRouter);
+
 server.use("/api", authRouter);
+server.use("/api", authenticate, commentsRouter);
+server.use("/api", authenticate, paymentsRouter);
+server.use("/api", authenticate, accountsRouter);
+server.use("/api", authenticate, jobsRouter);
+server.use("/api", authenticate, customerRouter);
 
 // server.use("/jobs", authenticate, jobsRouter);
 
