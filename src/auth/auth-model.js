@@ -12,6 +12,8 @@ module.exports = {
   deleteOne,
 };
 
+var timestamp = new Date().toLocaleDateString();
+
 function find() {
   return db("users")
     .select("users.*", "roles.role")
@@ -20,13 +22,12 @@ function find() {
 }
 
 function getUser(id) {
-  return (
-    db("users")
-      // .select("id", "first_name", "last_name", "email")
-      .select()
-      .where({ id })
-      .first()
-  );
+  return db("users")
+    .select("users.*", "roles.role")
+    .join("user_roles", "user_roles.user_id", "users.id")
+    .join("roles", "roles.id", "user_roles.role_id")
+    .where("users.id", id)
+    .first();
 }
 
 function addUser(user) {
@@ -60,7 +61,22 @@ function findBy(filter) {
 function editById(id, update) {
   return db("users")
     .where({ id })
-    .update(update, ["id", "username", "first_name"]);
+    .update(
+      {
+        username: update.username,
+        password: update.password,
+        email: update.email,
+        first_name: update.first_name,
+        last_name: update.last_name,
+        role_id: update.role_id,
+        updated_at: timestamp,
+      },
+      ["id", "username", "first_name"]
+    )
+    .then((ids) => {
+      console.log("whats ids ", ids, id);
+      return findById(id);
+    });
 }
 
 // for validation
