@@ -3,6 +3,9 @@ const jwt = require("./middleware/jwtAccess");
 const Users = require("./auth-model");
 const Jobs = require("./auth-jobs-model");
 const Helpers = require("./middleware/helpers");
+const Comments = require("./auth-comments-model");
+const Payments = require("./auth-payments-model");
+
 require("dotenv").config();
 
 // GET all jobs no-filter
@@ -41,21 +44,22 @@ router.get("/jobs", async (req, res) => {
 });
 
 // GET find job by ID
-router.get("/jobs/:id", (req, res) => {
+router.get("/jobs/:id", async (req, res) => {
   const { id } = req.params;
+  const job = await Jobs.findById(id);
+  const comments = await Comments.findByJobId(id);
+  const payments = await Payments.findByJobId(id);
 
-  Jobs.findById(id)
-    .then((job) => {
-      if (job) {
-        res.status(200).json(job);
-      } else {
-        res.status(400).json({ message: "That job does not exist" });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ error: "Server error" });
-    });
+  try {
+    if (job) {
+      res.status(200).json({ ...job, comments, payments });
+    } else {
+      res.status(400).json({ message: "That job does not exist" });
+    }
+  } catch (error) {
+    console.log("Server error ", error);
+    res.status(500).json({ error: "Server error " });
+  }
 });
 
 // POST create a new job
@@ -123,36 +127,6 @@ router.get("/jobs/user-job/:id", (req, res, next) => {
       res.status(500).json({ err: "Server error..." });
     });
 });
-
-// GET jobs by progress status
-// example /jobs?customer_id=desc
-// example /jobs?in_progress=asc
-// http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
-// router.get("/jobs", (req, res) => {
-//   // const sort = {
-//   //   field: Object.keys(req.query)[0],
-//   //   order: Object.values(req.query)[0],
-//   // };
-//   console.log("What is query", req.query.sort[0]);
-
-//   // const sortByName = Object.keys(req.query)[0];
-//   // const order = Object.values(req.query)[0];
-//   // console.log("What is direction ", sort.order);
-//   // console.log("sortbyname ", sort.field);
-//   Jobs.sortByFieldName(req.query.sort[0], sort.order)
-//     .then((jobs) => {
-//       console.log("Jobs: ", jobs);
-//       if (jobs.length === 0) {
-//         res.status(404).json({ message: "No jobs" });
-//       } else {
-//         res.status(200).json({ jobs: jobs });
-//       }
-//     })
-//     .catch((err) => {
-//       console.log(err);
-//       res.status(500).json({ error: "Server error..." });
-//     });
-// });
 
 // PUT EDIT a single job
 router.put("/jobs/:id", (req, res) => {
