@@ -1,23 +1,37 @@
 const router = require("express").Router();
 const jwt = require("./middleware/jwtAccess");
-const Users = require("./auth-model");
-const Jobs = require("./auth-jobs-model");
 const Helpers = require("./middleware/helpers");
 const Payments = require("./auth-payments-model");
 require("dotenv").config();
 
-router.get("/payments", (req, res) => {
-  const columnName = JSON.parse(req.query.sort)[0];
-  const order = JSON.parse(req.query.sort)[1];
+router.get("/payments", async (req, res) => {
+  let columnName, order, columnId, id, startIndex, endIndex;
+
+  if (req.query.range) {
+    startIndex = await JSON.parse(req.query.range)[0];
+    endIndex = await JSON.parse(req.query.range)[1];
+  }
+  if (req.query.sort) {
+    columnName = await JSON.parse(req.query.sort)[0];
+    order = await JSON.parse(req.query.sort)[1];
+  }
+  if (req.query.filter) {
+    columnId = await JSON.parse(req.query.filter);
+    if (columnId.id) {
+      id = columnId.id[0];
+    }
+  }
+
   Payments.find()
     .then((payments) => {
       res.setHeader(`Content-Range`, payments.length);
-      console.log("payments ", payments);
+      const result = payments.slice(startIndex, endIndex);
+
       if (order === "ASC") {
-        sorted = Helpers.sortAsc(payments, columnName);
+        sorted = Helpers.sortAsc(result, columnName);
       }
       if (order === "DESC") {
-        sorted = Helpers.sortDesc(payments, columnName);
+        sorted = Helpers.sortDesc(result, columnName);
       }
       res.status(200).json(sorted);
     })
@@ -44,9 +58,9 @@ router.get("/payments/:id", (req, res) => {
     });
 });
 
-router.post("/payments", (req, res) => {
+router.put("/payments/:id", (req, res) => {
   const body = req.body;
-  // this is account id not payment id
+  // this is account/job id not payment id
   const { id } = req.params;
 
   if (Helpers.isObjectEmpty(body))
@@ -64,11 +78,31 @@ router.post("/payments", (req, res) => {
             console.log(err);
             res.status(500).json(err);
           });
+      } else {
+        res
+          .status(400)
+          .json({ message: "Cannot find this account in database..." });
       }
     })
     .catch((error) => {
       console.log(error);
       res.status(500).json({ error: "Server error" });
+    });
+});
+
+router.post("/payments", (req, res) => {
+  const body = req.body;
+  if (Helpers.isObjectEmpty(body))
+    return res.status(409).json({ error: "Please enter something" });
+  // this is account id not payment id
+  Payments.addOne(body)
+    .then((p) => {
+      console.log("whats p ", p);
+      res.status(201).json(p);
+    })
+    .catch((error) => {
+      console.log("Server error ", error);
+      res.status(500).json("server error ", error);
     });
 });
 
