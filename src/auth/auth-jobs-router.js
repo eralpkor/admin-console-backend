@@ -11,7 +11,12 @@ require("dotenv").config();
 // GET all jobs no-filter
 // http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
 router.get("/jobs", async (req, res) => {
-  let columnName, order, columnId, id;
+  let columnName, order, columnId, id, startIndex, endIndex;
+
+  if (req.query.range) {
+    startIndex = await JSON.parse(req.query.range)[0];
+    endIndex = await JSON.parse(req.query.range)[1];
+  }
   if (req.query.sort) {
     columnName = await JSON.parse(req.query.sort)[0];
     order = await JSON.parse(req.query.sort)[1];
@@ -25,17 +30,17 @@ router.get("/jobs", async (req, res) => {
 
   Jobs.findAllJobs()
     .then((jobs) => {
-      // added for admin-console
       res.setHeader(`Content-Range`, jobs.length);
-      let sortedJobs = jobs;
+      const result = jobs.slice(startIndex, endIndex);
+      let sorted;
 
       if (order === "ASC") {
-        sortedJobs = Helpers.sortAsc(jobs, columnName);
+        sorted = Helpers.sortAsc(result, columnName);
       }
       if (order === "DESC") {
-        sortedJobs = Helpers.sortDesc(jobs, columnName);
+        sorted = Helpers.sortDesc(result, columnName);
       }
-      res.status(200).json(sortedJobs);
+      res.status(200).json(sorted);
     })
     .catch((error) => {
       console.log(error);
