@@ -5,14 +5,24 @@ const Helpers = require("./middleware/helpers");
 require("dotenv").config();
 
 // All comments
+// http://localhost:5000/api/comments?filter={}&range=[10,19]&sort=["id","ASC"]
+// http://localhost:5000/api/comments?filter={}&range=[0,24]&sort=["id","ASC"]
+// http://localhost:5000/api/jobs?filter={"job_title":"investor"}&range=[0,24]&sort=["job_description","DESC"]
+// http://localhost:5000/api/jobs?filter={}&range=[0,24]&sort=["job_description","DESC"]
 router.get("/comments", async (req, res) => {
-  let columnName, order, columnId, id;
+  let columnName, order, columnId, id, startIndex, endIndex;
+
+  if (req.query.range) {
+    startIndex = await JSON.parse(req.query.range)[0];
+    endIndex = await JSON.parse(req.query.range)[1];
+  }
   if (req.query.sort) {
     columnName = await JSON.parse(req.query.sort)[0];
     order = await JSON.parse(req.query.sort)[1];
   }
   if (req.query.filter) {
     columnId = await JSON.parse(req.query.filter);
+
     if (columnId.id) {
       id = columnId.id[0];
     }
@@ -21,14 +31,14 @@ router.get("/comments", async (req, res) => {
   Comments.find()
     .then((comments) => {
       res.setHeader(`Content-Range`, comments.length);
+      const result = comments.slice(startIndex, endIndex);
+      let sorted = result;
 
-      console.log(comments);
-      let sorted = comments;
       if (order === "ASC") {
-        sorted = Helpers.sortAsc(comments, columnName);
+        sorted = Helpers.sortAsc(result, columnName);
       }
       if (order === "DESC") {
-        sorted = Helpers.sortDesc(comments, columnName);
+        sorted = Helpers.sortDesc(result, columnName);
       }
       res.status(200).json(sorted);
     })
