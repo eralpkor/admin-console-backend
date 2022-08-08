@@ -20,15 +20,6 @@ let corsOptions = {
 server.use(helmet());
 server.use(cors(corsOptions));
 server.use(express.json());
-//node js
-// server.use(function (req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   next();
-// });
 
 server.use("/api", authRouter);
 server.use("/api", authenticate, commentsRouter);
@@ -36,8 +27,6 @@ server.use("/api", authenticate, paymentsRouter);
 server.use("/api", authenticate, accountsRouter);
 server.use("/api", authenticate, jobsRouter);
 server.use("/api", authenticate, customerRouter);
-
-// server.use("/jobs", authenticate, jobsRouter);
 
 server.get("/", (req, res) => {
   res.send("<h2>Let's cook something! 🌽🥕 😄</h2>");
