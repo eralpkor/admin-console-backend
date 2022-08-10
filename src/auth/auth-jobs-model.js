@@ -88,29 +88,25 @@ function addOne(job) {
 }
 
 function findById(id) {
-  return (
-    db("jobs")
-      .select(
-        "jobs.*",
-        "customers.first_name",
-        "customers.last_name",
-        "users.username",
-        "accounts.total",
-        "accounts.balance",
-        "accounts.job_id",
-        "payments.check_number",
-        "payments.amount_paid",
-        "payments.payment_type"
-        // "comments.job_id"
-      )
-      .join("customers", "customers.id", "jobs.customer_id")
-      .join("users", "users.id", "jobs.assigned_to")
-      .join("accounts", "accounts.job_id", "jobs.id")
-      .join("payments", "accounts.job_id", "payments.account_id")
-      // .join("comments", "comments.job_id", "jobs.id")
-      .where("jobs.id", id)
-      .first()
-  );
+  return db("jobs")
+    .select(
+      "jobs.*",
+      "customers.first_name",
+      "customers.last_name",
+      "users.username",
+      "accounts.total",
+      "accounts.balance",
+      "accounts.job_id",
+      "payments.check_number",
+      "payments.amount_paid",
+      "payments.payment_type"
+    )
+    .join("customers", "customers.id", "jobs.customer_id")
+    .join("users", "users.id", "jobs.assigned_to")
+    .join("accounts", "accounts.job_id", "jobs.id")
+    .join("payments", "accounts.job_id", "payments.account_id")
+    .where("jobs.id", id)
+    .first();
 }
 
 function updateOne(id, job) {
