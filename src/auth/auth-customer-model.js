@@ -3,12 +3,12 @@ const db = require("../database/dbConfig");
 module.exports = {
   find,
   findBy,
-  findByCustomerId,
+  findById,
   updateCustomer,
-  getCustomer,
   addCustomer,
   findByEmail,
 };
+var timestamp = new Date().toLocaleDateString();
 
 // SELECT *, first_name || " " || last_name AS FullName FROM customers
 // var colums = knex.raw(
@@ -20,26 +20,41 @@ function find() {
     .columns(db.raw("first_name || ' ' || last_name AS full_name"));
 }
 
-function findByCustomerId(id) {
+function findById(id) {
   return db("customers").where({ id }).first();
 }
 
-function updateCustomer(id, changed) {
-  return db("customers")
-    .where({ id })
-    .update(changed, ["id", "first_name", "last_name"]);
+function updateCustomer(id, changes) {
+  return db("customers").where({ id }).update(
+    {
+      first_name: changes.first_name,
+      last_name: changes.last_name,
+      email: changes.email,
+      phone: changes.phone,
+      company: changes.company,
+      updated_at: timestamp,
+    },
+    ["id", "first_name", "last_name"]
+  );
 }
 
-function getCustomer(id) {
-  return db("customers").select().where({ id }).first();
-}
-
-function addCustomer(params) {
+function addCustomer(changes) {
+  console.log("add customer ", changes);
   return db("customers")
-    .insert(params, "id")
+    .insert(
+      {
+        first_name: changes.first_name,
+        last_name: changes.last_name,
+        email: changes.email,
+        phone: changes.phone,
+        company: changes.company,
+        created_at: timestamp,
+      },
+      "id"
+    )
     .then((ids) => {
       const [id] = ids;
-      return findByCustomerId(id);
+      return findById(id);
     });
 }
 
