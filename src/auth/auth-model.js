@@ -16,7 +16,7 @@ var timestamp = new Date().toLocaleDateString();
 
 function find() {
   return db("users")
-    .select("users.*", "roles.role")
+    .select("users.*", "roles.role", "user_roles.role_id")
     .join("user_roles", "user_roles.user_id", "users.id")
     .join("roles", "roles.id", "user_roles.role_id")
     .where("is_deleted", false);
