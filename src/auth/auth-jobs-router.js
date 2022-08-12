@@ -7,45 +7,76 @@ const Comments = require("./auth-comments-model");
 const Payments = require("./auth-payments-model");
 
 require("dotenv").config();
-
+// http://localhost:5000/api/users?filter={"id":[3]}
 // GET all jobs no-filter
 // http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["job_title","DESC"]
+// http://localhost:5000/api/jobs?filter={"job_title":"job 2"}&range=[0,9]&sort=["id","ASC"]
 router.get("/jobs", async (req, res) => {
-  let columnName, order, columnId, id, startIndex, endIndex;
+  let result = [];
+  let columnName, order, search, id, startIndex, endIndex;
+
+  try {
+    result = await Jobs.findAllJobs();
+  } catch (error) {
+    res.status(500).json({ error: "Cannot get jobs..." });
+  }
 
   if (req.query.range) {
     startIndex = await JSON.parse(req.query.range)[0];
     endIndex = await JSON.parse(req.query.range)[1];
+    result = result.slice(startIndex, endIndex);
   }
   if (req.query.sort) {
     columnName = await JSON.parse(req.query.sort)[0];
     order = await JSON.parse(req.query.sort)[1];
-  }
-  if (req.query.filter) {
-    columnId = await JSON.parse(req.query.filter);
-    if (columnId.id) {
-      id = columnId.id[0];
+    if (order === "ASC") {
+      result = Helpers.sortAsc(result, columnName);
+    }
+    if (order === "DESC") {
+      result = Helpers.sortDesc(result, columnName);
     }
   }
+  // http://localhost:5000/api/jobs?filter={"q":"open"}&range=[0,9]&sort=["id","ASC"]
+  if (req.query.filter) {
+    search = await JSON.parse(req.query.filter);
+    if (search.job_title) {
+      let query = search.job_title.toLowerCase().trim();
+      console.log("query ", query);
 
-  Jobs.findAllJobs()
-    .then((jobs) => {
-      res.setHeader(`Content-Range`, jobs.length);
-      const result = jobs.slice(startIndex, endIndex);
-      let sorted;
-
-      if (order === "ASC") {
-        sorted = Helpers.sortAsc(result, columnName);
-      }
-      if (order === "DESC") {
-        sorted = Helpers.sortDesc(result, columnName);
-      }
-      res.status(200).json(sorted);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({ error: "Cannot get jobs..." });
-    });
+      result = result.filter((x) => {
+        let j = x.job_title.toLowerCase();
+        console.log("whats j ", j);
+        return j.includes(query);
+      });
+    }
+    if (search.assigned_to) {
+      let query = search.assigned_to.toLowerCase().trim();
+      console.log("query ", query);
+      result = result.filter((x) => {
+        let j = x.assigned_to.toLowerCase();
+        console.log("whats j ", j);
+        return j.includes(query);
+      });
+    }
+    if (search.last_name) {
+      let query = search.last_name.toLowerCase().trim();
+      result = result.filter((x) => {
+        let j = x.last_name.toLowerCase();
+        console.log("whats j ", j);
+        return j.includes(query);
+      });
+    }
+    if (search.in_progress) {
+      let query = search.in_progress.toLowerCase().trim();
+      result = result.filter((x) => {
+        let j = x.in_progress.toLowerCase();
+        console.log("whats j ", j);
+        return j.includes(query);
+      });
+    }
+  }
+  res.setHeader(`Content-Range`, result.length);
+  res.status(200).json(result);
 });
 
 // GET find job by ID
