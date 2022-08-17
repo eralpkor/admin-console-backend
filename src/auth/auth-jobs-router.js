@@ -5,7 +5,6 @@ const Jobs = require("./auth-jobs-model");
 const Helpers = require("./middleware/helpers");
 const Comments = require("./auth-comments-model");
 const Payments = require("./auth-payments-model");
-
 require("dotenv").config();
 // http://localhost:5000/api/users?filter={"id":[3]}
 // GET all jobs no-filter
@@ -36,7 +35,7 @@ router.get("/jobs", async (req, res) => {
       result = Helpers.sortDesc(result, columnName);
     }
   }
-  // http://localhost:5000/api/jobs?filter={"q":"open"}&range=[0,9]&sort=["id","ASC"]
+
   if (req.query.filter) {
     search = await JSON.parse(req.query.filter);
     if (search.job_title) {
