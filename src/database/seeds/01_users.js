@@ -16,7 +16,6 @@ exports.seed = async function (knex) {
       first_name: "Jatinder",
       last_name: "Sharma",
       email: "jatinder@aexperts.com",
-      role_id: 1,
       is_deleted: false,
     },
     {
@@ -25,7 +24,6 @@ exports.seed = async function (knex) {
       first_name: "Eralp",
       last_name: "Kor",
       email: "eralp.ny@gmail.com",
-      role_id: 1,
       is_deleted: false,
     },
     {
@@ -34,7 +32,6 @@ exports.seed = async function (knex) {
       first_name: "Sunny",
       last_name: "Kor",
       email: "sunny@gmail.com",
-      role_id: 2,
       is_deleted: false,
     },
     {
@@ -43,7 +40,6 @@ exports.seed = async function (knex) {
       first_name: "Susan",
       last_name: "Kor",
       email: "susan@gmail.com",
-      role_id: 3,
       is_deleted: false,
     },
     {
@@ -52,7 +48,6 @@ exports.seed = async function (knex) {
       first_name: "Jon",
       last_name: "Got",
       email: "John@gmail.com",
-      role_id: 3,
       is_deleted: false,
     },
     {
@@ -61,7 +56,6 @@ exports.seed = async function (knex) {
       first_name: "Kai",
       last_name: "Kor",
       email: "kai@gmail.com",
-      role_id: 3,
       is_deleted: false,
     },
     {
@@ -70,7 +64,6 @@ exports.seed = async function (knex) {
       first_name: "Norman",
       last_name: "Kor",
       email: "norman1@gmail.com",
-      role_id: 3,
       is_deleted: false,
     },
   ]);
