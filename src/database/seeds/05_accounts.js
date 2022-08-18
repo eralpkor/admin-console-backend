@@ -16,8 +16,8 @@ function randomIds() {
 
 const createFakeAccounts = () => ({
   job_id: randomIds(),
-  total: 100,
-  balance: 100,
+  total: 1000,
+  balance: 500,
 });
 
 exports.seed = async function (knex) {
