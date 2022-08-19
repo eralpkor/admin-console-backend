@@ -40,11 +40,9 @@ router.get("/jobs", async (req, res) => {
     search = await JSON.parse(req.query.filter);
     if (search.job_title) {
       let query = search.job_title.toLowerCase().trim();
-      console.log("query ", query);
 
       result = result.filter((x) => {
         let j = x.job_title.toLowerCase();
-        console.log("whats j ", j);
         return j.includes(query);
       });
     }
@@ -53,7 +51,6 @@ router.get("/jobs", async (req, res) => {
       console.log("query ", query);
       result = result.filter((x) => {
         let j = x.assigned_to.toLowerCase();
-        console.log("whats j ", j);
         return j.includes(query);
       });
     }
@@ -61,7 +58,6 @@ router.get("/jobs", async (req, res) => {
       let query = search.last_name.toLowerCase().trim();
       result = result.filter((x) => {
         let j = x.last_name.toLowerCase();
-        console.log("whats j ", j);
         return j.includes(query);
       });
     }
@@ -69,7 +65,6 @@ router.get("/jobs", async (req, res) => {
       let query = search.in_progress.toLowerCase().trim();
       result = result.filter((x) => {
         let j = x.in_progress.toLowerCase();
-        console.log("whats j ", j);
         return j.includes(query);
       });
     }
