@@ -4,6 +4,7 @@ module.exports = {
   find,
   findByJobId,
   addOne,
+  updateOne,
 };
 
 var timestamp = new Date().toLocaleDateString();
@@ -13,7 +14,10 @@ function find() {
 }
 
 function findByJobId(id) {
-  return db("comments").select().where("comments.job_id", id);
+  return db("comments")
+    .select("comments.*", "users.username as added_by")
+    .join("users", "users.id", "comments.added_by")
+    .where("comments.job_id", id);
 }
 
 function addOne(data) {
@@ -22,6 +26,7 @@ function addOne(data) {
     .select()
     .insert({
       job_id: data.job_id,
+      added_by: data.added_by,
       created_at: timestamp,
       comment: data.comment,
     })
@@ -34,3 +39,5 @@ function addOne(data) {
       console.log("Error ", error);
     });
 }
+
+function updateOne(id, comment) {}
