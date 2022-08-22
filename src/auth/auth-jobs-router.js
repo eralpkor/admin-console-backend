@@ -17,7 +17,7 @@ router.get("/jobs", async (req, res) => {
   try {
     result = await Jobs.findAllJobs();
   } catch (error) {
-    res.status(500).json({ error: "Cannot get jobs..." });
+    res.status(500).json({ error: "Cannot get database..." });
   }
 
   if (req.query.range) {
@@ -38,6 +38,10 @@ router.get("/jobs", async (req, res) => {
 
   if (req.query.filter) {
     search = await JSON.parse(req.query.filter);
+
+    if (search.id) {
+      result = result.filter((x) => search.id.includes(x.job_id));
+    }
     if (search.job_title) {
       let query = search.job_title.toLowerCase().trim();
 
@@ -48,7 +52,6 @@ router.get("/jobs", async (req, res) => {
     }
     if (search.assigned_to) {
       let query = search.assigned_to.toLowerCase().trim();
-      console.log("query ", query);
       result = result.filter((x) => {
         let j = x.assigned_to.toLowerCase();
         return j.includes(query);
@@ -189,33 +192,6 @@ router.put("/jobs/:id", (req, res) => {
       console.log(err);
       res.status(500).json({ error: "Server error" });
     });
-  // Users.findById(userId)
-  //   .then((u) => {
-  //     if (u.id === userId) {
-  //       Jobs.findById(id).then((ids) => {
-  //         console.log("JOB ids ", ids);
-  //         if (ids) {
-  //           Jobs.updateJob(id, changes)
-  //             .then((job) => {
-  //               res.status(200).json({
-  //                 message: `${Object.keys(changes)} updated successfully. `,
-  //                 changes,
-  //               });
-  //             })
-  //             .catch((err) => {
-  //               console.log(err);
-  //               res.status(404).json({ error: "No change happened..." });
-  //             });
-  //         } else {
-  //           res.status(404).json({ message: `No job with given id: ${id} ` });
-  //         }
-  //       });
-  //     }
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //     res.status(500).json({ error: err });
-  //   });
 });
 
 router.delete("/jobs/:id", (req, res) => {
