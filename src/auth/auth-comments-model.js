@@ -5,12 +5,15 @@ module.exports = {
   findByJobId,
   addOne,
   updateOne,
+  findById,
 };
 
 var timestamp = new Date().toLocaleDateString();
 
 function find() {
-  return db("comments").select();
+  return db("comments")
+    .select("comments.*", "users.username")
+    .join("users", "users.id", "comments.added_by");
 }
 
 function findByJobId(id) {
@@ -31,8 +34,6 @@ function addOne(data) {
       comment: data.comment,
     })
     .then((ids) => {
-      const id = [ids];
-      console.log("whats ids ", ids);
       return findByJobId(data.job_id);
     })
     .catch((error) => {
@@ -40,4 +41,24 @@ function addOne(data) {
     });
 }
 
-function updateOne(id, comment) {}
+function findById(id) {
+  return db("comments")
+    .select("comments.*", "users.username")
+    .join("users", "users.id", "comments.added_by")
+    .where("comments.id", id)
+    .first();
+}
+
+function updateOne(id, changes) {
+  console.log(id);
+  return db("comments")
+    .where({ id })
+    .update({
+      comment: changes.comment,
+      updated_at: timestamp,
+      added_by: changes.edited_by,
+    })
+    .then(() => {
+      return findById(id);
+    });
+}
