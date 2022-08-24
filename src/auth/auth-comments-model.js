@@ -42,21 +42,17 @@ function addOne(data) {
 }
 
 function findById(id) {
-  return db("comments")
-    .select("comments.*", "users.username")
-    .join("users", "users.id", "comments.added_by")
-    .where("comments.id", id)
-    .first();
+  return db("comments").select().where("comments.id", id).first();
 }
 
 function updateOne(id, changes) {
-  console.log(id);
+  // console.log("whats id changes ", id, changes);
   return db("comments")
     .where({ id })
     .update({
       comment: changes.comment,
       updated_at: timestamp,
-      added_by: changes.edited_by,
+      edited_by: changes.edited_by,
     })
     .then(() => {
       return findById(id);
