@@ -42,36 +42,6 @@ router.get("/comments", async (req, res) => {
     if (id) {
       result = result.filter((x) => id.includes(x.job_id));
     }
-    // if (search.job_title) {
-    //   let query = search.job_title.toLowerCase().trim();
-
-    //   result = result.filter((x) => {
-    //     let j = x.job_title.toLowerCase();
-    //     return j.includes(query);
-    //   });
-    // }
-    // if (search.assigned_to) {
-    //   let query = search.assigned_to.toLowerCase().trim();
-    //   console.log("query ", query);
-    //   result = result.filter((x) => {
-    //     let j = x.assigned_to.toLowerCase();
-    //     return j.includes(query);
-    //   });
-    // }
-    // if (search.last_name) {
-    //   let query = search.last_name.toLowerCase().trim();
-    //   result = result.filter((x) => {
-    //     let j = x.last_name.toLowerCase();
-    //     return j.includes(query);
-    //   });
-    // }
-    // if (search.in_progress) {
-    //   let query = search.in_progress.toLowerCase().trim();
-    //   result = result.filter((x) => {
-    //     let j = x.in_progress.toLowerCase();
-    //     return j.includes(query);
-    //   });
-    // }
   }
   res.setHeader(`Content-Range`, result.length);
   res.status(200).json(result);
@@ -85,7 +55,6 @@ router.post("/comments", async (req, res) => {
 
   Comments.addOne(body)
     .then((comment) => {
-      console.log("Do we get comments ", comment);
       res.status(201).json(comment);
     })
     .catch((error) => {
@@ -114,7 +83,7 @@ router.put("/comments/:id", (req, res) => {
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
-  console.log("edit comments ", id);
+  console.log("edit comments ", id, changes);
   Comments.findById(id)
     .then((ids) => {
       if (ids) {
