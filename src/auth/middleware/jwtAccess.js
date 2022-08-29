@@ -11,7 +11,7 @@ const generateToken = (user) => {
     role_id: user.role_id,
   };
   const options = {
-    expiresIn: "1d",
+    expiresIn: "1w",
   };
 
   return jwt.sign(payload, JWT_SECRET, options);
