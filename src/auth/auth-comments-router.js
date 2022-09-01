@@ -43,6 +43,7 @@ router.get("/comments", async (req, res) => {
       result = result.filter((x) => id.includes(x.job_id));
     }
   }
+  console.log("comments ", result);
   res.setHeader(`Content-Range`, result.length);
   res.status(200).json(result);
 });
