@@ -15,7 +15,7 @@ router.get("/jobs", async (req, res) => {
   let columnName, order, search, id, startIndex, endIndex;
 
   try {
-    result = await Jobs.findAllJobs();
+    result = await Jobs.find();
   } catch (error) {
     res.status(500).json({ error: "Cannot get database..." });
   }
@@ -80,12 +80,16 @@ router.get("/jobs", async (req, res) => {
 router.get("/jobs/:id", async (req, res) => {
   const { id } = req.params;
   const job = await Jobs.findById(id);
-  const comments = await Comments.findByJobId(id);
-  const payments = await Payments.findByJobId(id);
+  // const comments = await Comments.findByJobId(id);
+  // let payments = await Payments.findByJobId(id);
 
   try {
     if (job) {
-      res.status(200).json({ ...job, comments, payments });
+      // if (payments.length === 1 && payments[0].amount_paid === 0) {
+      //   payments = [];
+      // }
+
+      res.status(200).json({ ...job }); // , comments, payments
     } else {
       res.status(400).json({ message: "That job does not exist" });
     }
@@ -112,72 +116,21 @@ router.post("/jobs", (req, res) => {
     });
 });
 
-// GET jobs by single customer by id.
-router.get("/jobs/customer-job/:id", (req, res) => {
-  const id = req.params.id;
-  Jobs.findByCustomerId(id)
-    .then((jobs) => {
-      if (jobs.length) {
-        res.status(200).json({ jobs: jobs });
-      } else {
-        res.status(400).json({ message: "No job for that user yet... " });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ error: "Server error.. " });
-    });
-});
-
-// GET jobs by user/admin id
-router.get("/jobs/user-job/:id", (req, res, next) => {
-  const id = req.params.id;
-
-  Users.findById(id)
-    .then((ids) => {
-      if (!ids) {
-        console.log("user do not exist");
-        res.status(404).json({ message: "That user does not exist " });
-      } else {
-        Jobs.findByUserId(id)
-          .then((jobs) => {
-            if (jobs.length > 0) {
-              res.status(200).json({ jobs: jobs });
-            } else {
-              res
-                .status(400)
-                .json({ message: "You did not create any jobs yet " });
-            }
-          })
-          .catch((err) => {
-            console.log(err);
-            res.status(500).json({ err: "Server error..." });
-          });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ err: "Server error..." });
-    });
-});
-
 // PUT EDIT a single job
 router.put("/jobs/:id", (req, res) => {
   // const userId = req.user.subject;
   const changes = req.body;
   const { id } = req.params;
-  // console.log(id);
+
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
 
   Jobs.findById(id)
     .then((ids) => {
-      // console.log("JOB ids ", ids);
       if (ids) {
         Jobs.updateOne(id, changes)
           .then((job) => {
-            // console.log("what is job ", job);
             res.status(200).json(job);
           })
           .catch((err) => {
