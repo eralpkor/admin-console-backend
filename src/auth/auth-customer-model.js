@@ -1,8 +1,6 @@
 const db = require("../database/dbConfig");
-
 module.exports = {
   find,
-  findBy,
   findById,
   updateCustomer,
   addCustomer,
@@ -25,17 +23,24 @@ function findById(id) {
 }
 
 function updateCustomer(id, changes) {
-  return db("customers").where({ id }).update(
-    {
-      first_name: changes.first_name,
-      last_name: changes.last_name,
-      email: changes.email,
-      phone: changes.phone,
-      company: changes.company,
-      updated_at: timestamp,
-    },
-    ["id", "first_name", "last_name"]
-  );
+  return db("customers")
+    .where({ id })
+    .update(
+      {
+        first_name: changes.first_name,
+        last_name: changes.last_name,
+        email: changes.email,
+        phone: changes.phone,
+        company: changes.company,
+        notes: changes.notes,
+        updated_at: timestamp,
+      },
+      ["id", "first_name", "last_name"]
+    )
+    .then((ids) => {
+      const [id] = ids;
+      return findById(id);
+    });
 }
 
 function addCustomer(changes) {
@@ -48,6 +53,7 @@ function addCustomer(changes) {
         email: changes.email,
         phone: changes.phone,
         company: changes.company,
+        notes: changes.notes,
         created_at: timestamp,
       },
       "id"
@@ -56,10 +62,6 @@ function addCustomer(changes) {
       const [id] = ids;
       return findById(id);
     });
-}
-
-function findBy(filter) {
-  return db("customers").where(filter);
 }
 
 // for validation
