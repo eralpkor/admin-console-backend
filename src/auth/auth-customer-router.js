@@ -6,34 +6,70 @@ const Helpers = require("./middleware/helpers");
 
 // GET all customers
 router.get("/customers", async (req, res) => {
-  let columnName, order, columnId, id;
+  let result = [];
+  let columnName, order, search, id, startIndex, endIndex;
+
+  try {
+    result = await Customers.find();
+  } catch (error) {
+    res.status(500).json({ error: "Cannot get database..." });
+  }
+
+  if (req.query.range) {
+    startIndex = await JSON.parse(req.query.range)[0];
+    endIndex = await JSON.parse(req.query.range)[1];
+    result = result.slice(startIndex, endIndex);
+  }
   if (req.query.sort) {
     columnName = await JSON.parse(req.query.sort)[0];
     order = await JSON.parse(req.query.sort)[1];
-  }
-  if (req.query.filter) {
-    columnId = await JSON.parse(req.query.filter);
-    if (columnId.id) {
-      id = columnId.id[0];
+    if (order === "ASC") {
+      result = Helpers.sortAsc(result, columnName);
+    }
+    if (order === "DESC") {
+      result = Helpers.sortDesc(result, columnName);
     }
   }
 
-  Customers.find()
-    .then((customers) => {
-      res.setHeader(`Content-Range`, customers.length);
-      let sorted = customers;
-      if (order === "ASC") {
-        sorted = Helpers.sortAsc(customers, columnName);
-      }
-      if (order === "DESC") {
-        sorted = Helpers.sortDesc(customers, columnName);
-      }
-      res.status(200).json(customers);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ message: "Cannot get customers..." });
-    });
+  if (req.query.filter) {
+    search = await JSON.parse(req.query.filter);
+
+    if (search.first_name) {
+      let query = search.first_name.toLowerCase().trim();
+
+      result = result.filter((x) => {
+        let j = x.first_name.toLowerCase();
+        return j.includes(query);
+      });
+    }
+    if (search.last_name) {
+      let query = search.last_name.toLowerCase().trim();
+
+      result = result.filter((x) => {
+        let j = x.last_name.toLowerCase();
+        return j.includes(query);
+      });
+    }
+    if (search.email) {
+      let query = search.email.toLowerCase().trim();
+
+      result = result.filter((x) => {
+        let j = x.email.toLowerCase();
+        return j.includes(query);
+      });
+    }
+    if (search.company) {
+      let query = search.company.toLowerCase().trim();
+
+      result = result.filter((x) => {
+        let j = x.company.toLowerCase();
+        return j.includes(query);
+      });
+    }
+  }
+
+  res.setHeader(`Content-Range`, result.length);
+  res.status(200).json(result);
 });
 
 // GET single customer
@@ -56,7 +92,7 @@ router.get("/customers/:id", (req, res) => {
     });
 });
 
-// PUT EDIT customer
+// PUT EDIT/UPDATE customer
 router.put("/customers/:id", (req, res) => {
   const changes = req.body;
   const { id } = req.params;
