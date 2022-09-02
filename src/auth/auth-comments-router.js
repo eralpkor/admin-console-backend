@@ -1,5 +1,4 @@
 const router = require("express").Router();
-const jwt = require("./middleware/jwtAccess");
 const Comments = require("./auth-comments-model");
 const Helpers = require("./middleware/helpers");
 require("dotenv").config();
@@ -36,14 +35,19 @@ router.get("/comments", async (req, res) => {
   }
 
   if (req.query.filter) {
-    let query = await JSON.parse(req.query.filter);
-    let { id } = await query;
+    let search = await JSON.parse(req.query.filter);
 
-    if (id) {
+    if (search.job_id) {
       result = result.filter((x) => id.includes(x.job_id));
     }
+    if (search.comment) {
+      let query = search.comment.toLowerCase().trim();
+      result = result.filter((x) => {
+        let c = x.comment.toLowerCase();
+        return c.includes(query);
+      });
+    }
   }
-  console.log("comments ", result);
   res.setHeader(`Content-Range`, result.length);
   res.status(200).json(result);
 });
