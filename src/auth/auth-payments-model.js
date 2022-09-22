@@ -2,134 +2,120 @@ const db = require("../database/dbConfig");
 
 module.exports = {
   find,
-  addOne,
+  create,
   findById,
   findByJobId,
   deletePayment,
-  updateOne,
+  update,
 };
 
 var timestamp = new Date().toLocaleDateString();
 
 function find() {
-  return db("payments")
+  return db("payment")
     .select(
-      "payments.*",
-      "accounts.job_id as JobId",
-      "accounts.balance",
-      "accounts.total",
-      "jobs.job_title"
+      "payment.*",
+      "job.job_id as JobId",
+      "job.balance",
+      "job.total",
+      "jobs.title"
     )
-    .join("jobs", "jobs.id", "accounts.job_id")
-    .join("accounts", "accounts.job_id", "payments.account_id")
-    .where("payments.is_deleted", false);
+    .join("jobs", "jobs.id", "job.job_id")
+    .join("job", "job.job_id", "payment.jobId")
+    .where("payment.isDeleted", false);
 }
 
 function findById(id) {
-  return db("payments")
+  return db("payment")
     .select()
     .where("id", id)
-    .andWhere("is_deleted", false)
+    .andWhere("isDeleted", false)
     .first();
 }
 
 function findByJobId(id) {
-  return db("payments")
-    .select(
-      "payments.*",
-      "customers.id as customer_id",
-      "users.username as admin",
-      "accounts.total",
-      "accounts.balance"
-    )
-    .join("customers", "customers.id", "jobs.customer_id")
-    .join("accounts", "accounts.job_id", "payments.account_id")
-    .join("users", "users.id", "jobs.admin_id")
-    .join("jobs", "jobs.id", "accounts.job_id")
-    .where("payments.account_id", id)
-    .andWhere("payments.is_deleted", false)
-    .first();
+  return db("payment")
+    .select("payment.*", "job.*", "user.username as admin")
+    .join("user", "user.id", "payment.editedBy")
+    .join("job", "job.id", "payment.jobId")
+    .where("payment.jobId", id)
+    .andWhere("payment.isDeleted", false);
 }
 
-function addOne(payment) {
-  return db
-    .transaction(function (t) {
-      console.log("object is ", payment.account_id);
-      return db("payments")
-        .transacting(t)
-        .select("payments.*")
-        .where(payment.account_id)
-        .insert({
-          account_id: payment.account_id,
-          payment_type: payment.payment_type,
-          check_number: payment.check_number,
-          amount_paid: payment.amount_paid,
-          created_at: timestamp,
-        })
-        .then(() => {
-          let id = payment.account_id;
-          console.log("response ", id);
-          return db("accounts")
-            .transacting(t)
-            .where("job_id", id)
-            .decrement("balance", payment.amount_paid);
-        })
-        .then(t.commit)
-        .catch(t.rollback);
-    })
-    .then(() => {
-      let id = payment.account_id;
-      console.log("transaction succeeded ", id);
-      return findById(id);
-    })
-    .catch((err) => {
-      console.log("transaction failed", err);
-    });
-}
+async function create(payment) {
+  try {
+    await db.transaction(async (trx) => {
+      const ids = await trx("payment")
+        .insert(
+          {
+            jobId: payment.jobId,
+            paymentType: payment.paymentType,
+            amountPaid: payment.amountPaid,
+            userId: payment.userId,
+            editedBy: payment.editedBy,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          },
+          "id"
+        )
+        .transacting(trx);
+      const [id] = ids;
+      const paymentTotal = await trx("payment")
+        .where("jobId", payment.jobId)
+        .sum("amountPaid as sum")
+        .transacting(trx);
 
-function updateOne(id, data) {
-  console.log("whats id data ", id, data);
-  return db
-    .transaction(function (t) {
-      return db("payments")
-        .transacting(t)
-        .where({ id })
+      let sum = paymentTotal[0].sum;
+      const balance = await trx("job")
+        .where("id", payment.jobId)
         .update({
-          amount_paid: data.amount_paid,
-          payment_type: data.payment_type,
-          check_number: data.check_number,
-          updated_at: timestamp,
+          balance: db.raw(`total - ${sum}`),
         })
-        .then(() => {
-          return db("payments")
-            .transacting(t)
-            .sum("amount_paid as sum")
-            .where("account_id", data.account_id);
-        })
-        .then((total) => {
-          let sum = total[0].sum;
-          console.log("whats id sum ", id, sum);
-          return db("accounts")
-            .transacting(t)
-            .where({
-              job_id: data.account_id,
-            })
-            .update({
-              balance: db.raw(`total - ${sum}`),
-            });
-        })
-        .then(t.commit)
-        .catch(t.rollback);
-    })
-    .then(() => {
-      console.log("transaction succeeded ", id);
-      return findById(id);
-    })
-    .catch((err) => {
-      console.log("transaction failed", err);
+        .transacting(trx);
+
+      return findById(id.id);
     });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function update(id, payment) {
+  try {
+    await db.transaction(async (trx) => {
+      const ids = await trx("payment")
+        .where({ id })
+        .update(
+          {
+            paymentType: payment.paymentType,
+            amountPaid: payment.amountPaid,
+            editedBy: payment.editedBy,
+            updatedAt: timestamp,
+          },
+          ["id", "jobId"]
+        )
+        .transacting(trx);
+
+      const [result] = ids;
+      const paymentTotal = await trx("payment")
+        .where("jobId", result.jobId)
+        .sum("amountPaid as sum")
+        .transacting(trx);
+
+      let sum = paymentTotal[0].sum;
+      const balance = await trx("job")
+        .where("id", result.jobId)
+        .update({
+          balance: db.raw(`total - ${sum}`),
+        })
+        .transacting(trx);
+      return findById(result.id);
+    });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function deletePayment(id) {
-  return db("payments").where({ id }).del();
+  return db("payment").where({ id }).del();
 }
