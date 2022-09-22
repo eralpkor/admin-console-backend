@@ -1,38 +1,45 @@
 // Update with your config settings.
+require("dotenv").config({ path: "./.env" });
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
 module.exports = {
   development: {
-    client: "sqlite3",
-    connection: { filename: "./src/database/admin.db3" },
-    useNullAsDefault: true,
+    client: "pg",
+    connection: {
+      host:
+        process.env.DATABASE_URL ||
+        "postgresql://localhost:5432/adminconsoledb2",
+      user: "postgres",
+      password: process.env.USER_PASSWORD,
+      database: "adminconsoledb2",
+      schema: "aexperts",
+    },
     migrations: {
       directory: "./src/database/migrations",
-      tableName: "dbmigrations",
     },
     seeds: { directory: "./src/database/seeds" },
-    pool: {
-      afterCreate: (conn, done) => {
-        // runs after a connection is made to the sqlite engine
-        conn.run("PRAGMA foreign_keys = ON", done); // turn on FK enforcement
-      },
-    },
+    useNullAsDefault: true,
   },
 
-  // deploy to heroku
   production: {
     client: "pg",
-    connection: process.env.DATABASE_URL,
+    connection: {
+      host: process.env.DATABASE_URL,
+      user: "postgres",
+      password: process.env.USER_PASSWORD,
+      database: "adminconsoledb2",
+      schema: "aexperts",
+    },
     pool: {
       min: 2,
       max: 100,
     },
     migrations: {
       directory: "./src/database/migrations",
-      tableName: "dbmigrations",
     },
     seeds: { directory: "./src/database/seeds" },
+    useNullAsDefault: true,
   },
 };
