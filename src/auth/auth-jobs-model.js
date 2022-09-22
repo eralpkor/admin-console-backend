@@ -1,7 +1,7 @@
 const db = require("../database/dbConfig");
 module.exports = {
-  find,
-  addOne,
+  findMany,
+  create,
   // findBy,
   findByCustomerId,
   findByUserId,
@@ -9,163 +9,174 @@ module.exports = {
   findById,
   updateOne,
   deleteOne,
-  // findByIdEdit,
 };
 var timestamp = new Date().toLocaleDateString();
 
 // ********** JOB related model from here *****************
-// Find all jobs and return
+// Find all job and return
 
-function find() {
-  return db("jobs")
+function findMany() {
+  return db("job")
     .select(
-      "jobs.*",
-      "customers.first_name",
-      "customers.last_name",
-      "users.username as assigned_to",
-      "accounts.total as total",
-      "accounts.balance"
+      "job.*",
+      "customer.firstName",
+      "customer.lastName",
+      "user.username as username"
     )
-    .join("customers", "customers.id", "jobs.customer_id")
-    .join("users", "users.id", "jobs.assigned_to")
-    .join("accounts", "accounts.job_id", "jobs.id")
-    .andWhere("jobs.is_deleted", false);
+
+    .join("customer", "customer.id", "job.customerId")
+    .join("user", "user.id", "job.userId")
+    .andWhere("job.isDeleted", false);
 }
 
-function addOne(job) {
-  return db
-    .transaction(function (t) {
-      return db("jobs")
-        .transacting(t)
-        .select("jobs.*")
+async function create(job) {
+  try {
+    await db.transaction(async (trx) => {
+      const ids = await trx("job")
+        .insert(
+          {
+            title: job.title,
+            description: job.description,
+            inProgress: job.inProgress,
+            dueDate: job.dueDate,
+            customerId: job.customerId,
+            userId: job.userId,
+            adminId: job.adminId,
+            total: job.total,
+            updatedAt: timestamp,
+            balance: job.total - job.amountPaid,
+          },
+          "id"
+        )
+        .transacting(trx);
+      let [id] = ids;
+      console.log("whats ids ", id.id);
+      const payment = await trx("payment")
         .insert({
-          job_title: job.job_title,
-          job_description: job.job_description,
-          in_progress: job.in_progress,
-          due_date: job.due_date,
-          customer_id: job.customer_id,
-          assigned_to: job.assigned_to,
-          admin_id: job.admin_id,
-          created_at: timestamp,
+          updatedAt: timestamp,
+          userId: job.userId,
+          paymentType: job.paymentType,
+          amountPaid: job.amountPaid,
+          editedBy: job.adminId,
+          jobId: ids[0].id,
         })
-        .then((response) => {
-          let [id] = response;
-          return db("accounts")
-            .transacting(t)
-            .select()
-            .insert({
-              job_id: id,
-              balance: job.total - job.amount_paid,
-              total: job.total,
-            });
+        .transacting(trx);
+
+      const comment = await trx("comment")
+        .insert({
+          updatedAt: timestamp,
+          comment: job.comment,
+          userId: job.userId,
+          editedBy: job.adminId,
+          jobId: ids[0].id,
         })
-        .then((response) => {
-          let [id] = response;
-          return db("payments").transacting(t).select().returning(id).insert({
-            account_id: id,
-            payment_type: job.payment_type,
-            check_number: job.check_number,
-            amount_paid: job.amount_paid,
-            added_by: job.added_by,
-          });
-        })
-        .then(t.commit)
-        .catch(t.rollback);
-    })
-    .then((response) => {
-      // const [id] = ids;
-      // console.log("whats response ", response);
-      console.log("transaction succeeded ", id);
-      return findById(id);
-    })
-    .catch((err) => {
-      console.log("transaction failed", err);
+        .transacting(trx);
+      console.log("job saved ");
+      return findById(ids[0].id);
     });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function findById(id) {
-  return db("jobs")
+  console.log("what id ", id);
+  return db("job")
+    .where("job.id", id)
+
     .select(
-      "jobs.*",
-      "customers.first_name",
-      "customers.last_name",
-      "users.username",
-      "accounts.total",
-      "accounts.balance",
-      "accounts.job_id"
+      "job.*",
+      "customer.firstName",
+      "customer.lastName",
+      "user.username as processor",
+      "payment.*",
+      "comment.*"
     )
-    .join("customers", "customers.id", "jobs.customer_id")
-    .join("users", "users.id", "jobs.assigned_to")
-    .join("accounts", "accounts.job_id", "jobs.id")
-    .where("jobs.id", id)
+    .join("customer", "customer.id", "job.customerId")
+    .join("user", "user.id", "job.userId")
+    .join("payment", "payment.jobId", "job.id")
+    .join("comment", "comment.jobId", "job.id")
     .first();
 }
 
-function updateOne(id, job) {
-  return db
-    .transaction(function (t) {
-      return db("jobs")
-        .where({ id })
-        .transacting(t)
-        .select()
-        .update({
-          job_title: job.job_title,
-          job_description: job.job_description,
-          in_progress: job.in_progress,
-          due_date: job.due_date,
-          customer_id: job.customer_id,
-          assigned_to: job.assigned_to,
-          admin_id: job.admin_id,
-          updated_at: timestamp,
-        })
-        .then(() => {
-          return db("accounts")
-            .transacting(t)
-            .select()
-            .where({ id })
-            .update({
-              total: job.total,
-              balance: job.total - job.amount_paid,
-            });
-        })
-        .then(t.commit)
-        .catch(t.rollback);
-    })
-    .then(() => {
-      console.log("transaction succeeded ", id);
-      return findById(id);
-    })
-    .catch((err) => {
-      console.log("transaction failed", err);
-    });
+async function updateOne(id, data) {
+  const job = await findById(id);
+  console.log("whats job", job);
 }
 
-// Get jobs by a single customer.
-function findByCustomerId(customer_id) {
-  return db("jobs")
-    .select("jobs.*")
-    .from("jobs")
-    .join("customers", "customers.id", "jobs.customer_id")
-    .where("customer_id", customer_id);
+// function updateOne(id, job) {
+//   return db
+//     .transaction(function (t) {
+//       return db("job")
+//         .where({ id })
+//         .transacting(t)
+//         .select()
+//         .update({
+//           title: job.title,
+//           description: job.description,
+//           inProgress: job.inProgress,
+//           dueDate: job.dueDate,
+//           customerId: job.customerId,
+//           userId: job.userId,
+//           adminId: job.adminId,
+//           updated_at: timestamp,
+//         })
+//         .then(() => {
+//           console.log("whats id ", id);
+//           return db("payments")
+//             .transacting(t)
+//             .sum("amount_paid as sum")
+//             .where("account_id", id);
+//         })
+//         .then((amountPaid) => {
+//           let { sum } = amountPaid[0];
+//           console.log("whats sum id ", sum, id);
+//           return db("account")
+//             .transacting(t)
+//             .where({ id })
+//             .update({
+//               total: job.total,
+//               balance: db.raw(`total - ${sum}`),
+//             });
+//         })
+//         .then(t.commit)
+//         .catch(t.rollback);
+//     })
+//     .then(() => {
+//       console.log("transaction succeeded ", id);
+//       return findById(id);
+//     })
+//     .catch((err) => {
+//       console.log("transaction failed", err);
+//     });
+// }
+
+// Get job by a single customer.
+function findByCustomerId(customerId) {
+  return db("job")
+    .select("job.*")
+    .from("job")
+    .join("customer", "customer.id", "job.customerId")
+    .where("customerId", customerId);
 }
 
-// GET jobs by user
+// GET job by user
 function findByUserId(user_id) {
-  return db("jobs")
-    .select("jobs.*")
-    .from("jobs")
-    .join("users", "users.id", "jobs.user_id")
+  return db("job")
+    .select("job.*")
+    .from("job")
+    .join("user", "user.id", "job.user_id")
     .where("user_id", user_id);
 }
 
-// GET jobs by progress/status desc or asc
+// GET job by progress/status desc or asc
 function sortByFieldName(sortByName, direction) {
-  return db("jobs").select().orderBy(sortByName, direction);
-  // .orderBy("job_title", "asc");
+  return db("job").select().orderBy(sortByName, direction);
+  // .orderBy("title", "asc");
 }
 
 function deleteOne(id, update) {
-  return db("jobs").where({ id }).del();
+  return db("job").where({ id }).del();
 }
 
 // EOF
