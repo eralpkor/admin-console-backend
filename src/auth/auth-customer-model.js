@@ -3,70 +3,70 @@ module.exports = {
   find,
   findById,
   updateCustomer,
-  addCustomer,
+  create,
   findByEmail,
 };
 var timestamp = new Date().toLocaleDateString();
 
-// SELECT *, first_name || " " || last_name AS FullName FROM customers
+// SELECT *, firstName || " " || lastName AS FullName FROM customer
 // var colums = knex.raw(
-//   'SELECT *, first_name || " " || last_name AS FullName FROM customers'
+//   'SELECT *, firstName || " " || lastName AS FullName FROM customer'
 // );
+// .columns(db.raw("firstName || ' ' || lastName AS fullName"));
+
 function find() {
-  return db("customers")
-    .select("customers.*")
-    .columns(db.raw("first_name || ' ' || last_name AS full_name"));
+  return db("customer").select();
 }
 
 function findById(id) {
-  return db("customers").where({ id }).first();
+  return db("customer").where({ id }).first();
 }
 
 function updateCustomer(id, changes) {
-  return db("customers")
+  return db("customer")
     .where({ id })
     .update(
       {
-        first_name: changes.first_name,
-        last_name: changes.last_name,
+        firstName: changes.firstName,
+        lastName: changes.lastName,
         email: changes.email,
         phone: changes.phone,
         company: changes.company,
-        notes: changes.notes,
-        updated_at: timestamp,
+        comment: changes.comment,
+        updatedAt: timestamp,
       },
-      ["id", "first_name", "last_name"]
+      ["id", "firstName", "lastName"]
     )
     .then((ids) => {
-      const [id] = ids;
+      const [{ id }] = ids;
       return findById(id);
     });
 }
 
-function addCustomer(changes) {
+function create(changes) {
   console.log("add customer ", changes);
-  return db("customers")
+  return db("customer")
     .insert(
       {
-        first_name: changes.first_name,
-        last_name: changes.last_name,
+        firstName: changes.firstName,
+        lastName: changes.lastName,
         email: changes.email,
         phone: changes.phone,
         company: changes.company,
-        notes: changes.notes,
-        created_at: timestamp,
+        comment: changes.comment,
+        updatedAt: timestamp,
       },
       "id"
     )
     .then((ids) => {
-      const [id] = ids;
+      const [{ id }] = ids;
       return findById(id);
     });
 }
 
 // for validation
 function findByEmail(email) {
-  return db("customers")
+  return db("customer")
     .select("email")
     .where({
       email,
