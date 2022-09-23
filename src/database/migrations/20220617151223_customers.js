@@ -4,17 +4,17 @@
  */
 
 exports.up = function (knex) {
-  return knex.schema.createTable("customers", (tbl) => {
+  return knex.schema.createTable("customer", (tbl) => {
     tbl.increments();
-    tbl.string("first_name", 128);
-    tbl.string("last_name", 128);
+    tbl.date("createdAt").defaultTo(knex.fn.now());
+    tbl.date("updatedAt");
     tbl.string("email", 128).unique();
-    tbl.string("phone", 50);
+    tbl.string("firstName", 128);
+    tbl.string("lastName", 128);
+    tbl.string("phone", 128);
     tbl.string("company", 128);
-    tbl.string("notes", 258);
-    tbl.boolean("is_deleted").defaultTo(false); // set to true when deleted
-    tbl.timestamp("created_at").defaultTo(knex.fn.now());
-    tbl.timestamp("updated_at").defaultTo(knex.fn.now());
+    tbl.string("comment", 256);
+    tbl.boolean("isDeleted").defaultTo(false);
   });
 };
 
