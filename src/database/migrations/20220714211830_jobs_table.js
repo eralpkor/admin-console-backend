@@ -4,34 +4,30 @@
  */
 exports.up = function (knex) {
   // JOBS table
-  return knex.schema.createTable("jobs", (tbl) => {
+  return knex.schema.createTable("job", (tbl) => {
     tbl.increments();
-    tbl.timestamp("created_at").defaultTo(knex.fn.now());
-    tbl.timestamp("updated_at").defaultTo(knex.fn.now());
-    tbl.date("due_date", 50);
-    tbl.string("job_title", 128).notNullable();
-    tbl.string("job_description", 1024).notNullable();
-    tbl.enu("in_progress", ["open", "in-progress", "closed"]);
-    tbl.boolean("is_deleted").defaultTo(false);
-    // assign to user-processor
+    tbl.date("dueDate").notNullable();
+    tbl.date("createdAt").defaultTo(knex.fn.now());
+    tbl.date("updatedAt");
+    tbl.string("title", 128).notNullable();
+    tbl.string("description", 256).notNullable();
+    tbl.enu("inProgress", ["OPEN", "IN-PROGRESS", "CLOSED"]).defaultTo("OPEN");
     tbl
-      .integer("assigned_to")
+      .integer("userId")
       .unsigned()
       .notNullable()
       .references("id")
-      .inTable("users");
+      .inTable("user");
     tbl
-      .integer("customer_id")
+      .integer("customerId")
       .unsigned()
       .notNullable()
       .references("id")
-      .inTable("customers");
-    tbl
-      .integer("admin_id")
-      .unsigned()
-      .notNullable()
-      .references("id")
-      .inTable("users");
+      .inTable("customer");
+    tbl.integer("adminId").notNullable();
+    tbl.boolean("isDeleted").defaultTo(false);
+    tbl.float("total", 2).defaultTo(0);
+    tbl.float("balance", 2).defaultTo(0);
   });
 };
 
@@ -40,5 +36,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("jobs");
+  return knex.schema.dropTableIfExists("job");
 };
