@@ -7,12 +7,13 @@ const faker = require("faker");
 var timestamp = new Date().toLocaleDateString();
 
 const createFakeCustomers = () => ({
-  first_name: faker.name.firstName(),
-  last_name: faker.name.lastName(),
+  firstName: faker.name.firstName(),
+  lastName: faker.name.lastName(),
   email: faker.internet.email(),
   phone: faker.phone.phoneNumber(),
   company: faker.company.companyName(),
-  notes: faker.random.words(7),
+  comment: faker.random.words(7),
+  updatedAt: timestamp,
 });
 
 exports.seed = async function (knex) {
@@ -22,6 +23,6 @@ exports.seed = async function (knex) {
     fakeCustomers.push(createFakeCustomers());
   }
   // Deletes ALL existing entries
-  await knex("customers").del();
-  await knex("customers").insert(fakeCustomers);
+  await knex("customer").del();
+  await knex("customer").insert(fakeCustomers);
 };
