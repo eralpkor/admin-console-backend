@@ -5,7 +5,7 @@ const validateCustomer = require("./validateCustomer");
 const Helpers = require("./middleware/helpers");
 
 // GET all customers
-router.get("/customers", async (req, res) => {
+router.get("/customer", async (req, res) => {
   let result = [];
   let columnName, order, search, id, startIndex, endIndex;
 
@@ -15,57 +15,61 @@ router.get("/customers", async (req, res) => {
     res.status(500).json({ error: "Cannot get database..." });
   }
 
-  if (req.query.range) {
-    startIndex = await JSON.parse(req.query.range)[0];
-    endIndex = await JSON.parse(req.query.range)[1];
-    result = result.slice(startIndex, endIndex);
-  }
-  if (req.query.sort) {
-    columnName = await JSON.parse(req.query.sort)[0];
-    order = await JSON.parse(req.query.sort)[1];
-    if (order === "ASC") {
-      result = Helpers.sortAsc(result, columnName);
+  try {
+    if (req.query.range) {
+      startIndex = await JSON.parse(req.query.range)[0];
+      endIndex = await JSON.parse(req.query.range)[1];
+      result = result.slice(startIndex, endIndex);
     }
-    if (order === "DESC") {
-      result = Helpers.sortDesc(result, columnName);
+    if (req.query.sort) {
+      columnName = await JSON.parse(req.query.sort)[0];
+      order = await JSON.parse(req.query.sort)[1];
+      if (order === "ASC") {
+        result = Helpers.sortAsc(result, columnName);
+      }
+      if (order === "DESC") {
+        result = Helpers.sortDesc(result, columnName);
+      }
     }
-  }
 
-  if (req.query.filter) {
-    search = await JSON.parse(req.query.filter);
+    if (req.query.filter) {
+      search = await JSON.parse(req.query.filter);
 
-    if (search.first_name) {
-      let query = search.first_name.toLowerCase().trim();
+      if (search.first_name) {
+        let query = search.first_name.toLowerCase().trim();
 
-      result = result.filter((x) => {
-        let j = x.first_name.toLowerCase();
-        return j.includes(query);
-      });
+        result = result.filter((x) => {
+          let j = x.first_name.toLowerCase();
+          return j.includes(query);
+        });
+      }
+      if (search.last_name) {
+        let query = search.last_name.toLowerCase().trim();
+
+        result = result.filter((x) => {
+          let j = x.last_name.toLowerCase();
+          return j.includes(query);
+        });
+      }
+      if (search.email) {
+        let query = search.email.toLowerCase().trim();
+
+        result = result.filter((x) => {
+          let j = x.email.toLowerCase();
+          return j.includes(query);
+        });
+      }
+      if (search.company) {
+        let query = search.company.toLowerCase().trim();
+
+        result = result.filter((x) => {
+          let j = x.company.toLowerCase();
+          return j.includes(query);
+        });
+      }
     }
-    if (search.last_name) {
-      let query = search.last_name.toLowerCase().trim();
-
-      result = result.filter((x) => {
-        let j = x.last_name.toLowerCase();
-        return j.includes(query);
-      });
-    }
-    if (search.email) {
-      let query = search.email.toLowerCase().trim();
-
-      result = result.filter((x) => {
-        let j = x.email.toLowerCase();
-        return j.includes(query);
-      });
-    }
-    if (search.company) {
-      let query = search.company.toLowerCase().trim();
-
-      result = result.filter((x) => {
-        let j = x.company.toLowerCase();
-        return j.includes(query);
-      });
-    }
+  } catch (error) {
+    console.log("Wrong JSON ", error);
   }
 
   res.setHeader(`Content-Range`, result.length);
@@ -73,7 +77,7 @@ router.get("/customers", async (req, res) => {
 });
 
 // GET single customer
-router.get("/customers/:id", (req, res) => {
+router.get("/customer/:id", (req, res) => {
   const { id } = req.params;
 
   Customers.findById(id)
@@ -93,7 +97,7 @@ router.get("/customers/:id", (req, res) => {
 });
 
 // PUT EDIT/UPDATE customer
-router.put("/customers/:id", (req, res) => {
+router.put("/customer/:id", (req, res) => {
   const changes = req.body;
   const { id } = req.params;
 
@@ -123,10 +127,10 @@ router.put("/customers/:id", (req, res) => {
 });
 
 // POST Create customer
-router.post("/customers", validateCustomer, (req, res) => {
+router.post("/customer", validateCustomer, (req, res) => {
   const customer = req.body;
   console.log(customer);
-  Customers.addCustomer(customer)
+  Customers.create(customer)
     .then((c) => {
       res.status(201).json(c);
     })
