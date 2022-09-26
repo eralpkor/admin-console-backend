@@ -7,19 +7,23 @@ require("dotenv").config();
 router.get("/accounts", async (req, res) => {
   let columnName, order, columnId, id, startIndex, endIndex;
 
-  if (req.query.range) {
-    startIndex = await JSON.parse(req.query.range)[0];
-    endIndex = await JSON.parse(req.query.range)[1];
-  }
-  if (req.query.sort) {
-    columnName = await JSON.parse(req.query.sort)[0];
-    order = await JSON.parse(req.query.sort)[1];
-  }
-  if (req.query.filter) {
-    columnId = await JSON.parse(req.query.filter);
-    if (columnId.id) {
-      id = columnId.id[0];
+  try {
+    if (req.query.range) {
+      startIndex = await JSON.parse(req.query.range)[0];
+      endIndex = await JSON.parse(req.query.range)[1];
     }
+    if (req.query.sort) {
+      columnName = await JSON.parse(req.query.sort)[0];
+      order = await JSON.parse(req.query.sort)[1];
+    }
+    if (req.query.filter) {
+      columnId = await JSON.parse(req.query.filter);
+      if (columnId.id) {
+        id = columnId.id[0];
+      }
+    }
+  } catch (error) {
+    console.log("Wrong JSON ", error);
   }
 
   Accounts.find()
