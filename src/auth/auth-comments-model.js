@@ -56,18 +56,12 @@ async function create(data) {
   }
 }
 
-function findById(id) {
-  return db("comment")
-    .select("comment.*", "user.username")
-    .join("user", "user.id", "comment.editedBy")
-    .where("comment.id", id)
-    .first();
-}
-
+// EDIT comment
 async function update(id, changes) {
   try {
     await db.transaction(async (trx) => {
       const ids = await trx("comment")
+        .where({ id })
         .update(
           {
             comment: changes.comment,
@@ -90,4 +84,12 @@ async function update(id, changes) {
   } catch (error) {
     console.log("Comment edit error ", error);
   }
+}
+
+function findById(id) {
+  return db("comment")
+    .select("comment.*", "user.username")
+    .join("user", "user.id", "comment.editedBy")
+    .where("comment.id", id)
+    .first();
 }
