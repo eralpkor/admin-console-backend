@@ -3,58 +3,91 @@ const db = require("../database/dbConfig");
 module.exports = {
   find,
   findByJobId,
-  addOne,
-  updateOne,
+  create,
+  update,
   findById,
 };
 
 var timestamp = new Date().toLocaleDateString();
 
 function find() {
-  return db("comments")
-    .select("comments.*", "users.username")
-    .join("users", "users.id", "comments.added_by");
+  return db("comment")
+    .select("comment.*", "user.username")
+    .join("user", "user.id", "comment.editedBy")
+    .andWhere("comment.isDeleted", false);
 }
 
 function findByJobId(id) {
-  return db("comments")
-    .select("comments.*", "users.username as added_by")
-    .join("users", "users.id", "comments.added_by")
-    .where("comments.job_id", id);
+  return db("comment")
+    .select("comment.*", "user.username as editedBy")
+    .join("user", "user.id", "comment.editedBy")
+    .where("comment.jobId", id);
 }
 
-function addOne(data) {
-  console.log("AddOne data ", data);
-  return db("comments")
-    .select()
-    .insert({
-      job_id: data.job_id,
-      added_by: data.added_by,
-      created_at: timestamp,
-      comment: data.comment,
-    })
-    .then((ids) => {
-      return findByJobId(data.job_id);
-    })
-    .catch((error) => {
-      console.log("Error ", error);
+// CREATE a new comment
+async function create(data) {
+  try {
+    await db.transaction(async (trx) => {
+      const ids = await trx("comment")
+        .insert(
+          {
+            jobId: data.jobId,
+            userId: data.userId,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            comment: data.comment,
+            editedBy: data.editedBy,
+          },
+          ["id", "jobId", "userId", "editedBy"]
+        )
+        .transacting(trx);
+
+      const [result] = ids;
+      const log = await trx("log")
+        .insert({
+          userId: result.userId,
+          log: `New comment with id ${ids[0].id} added by user id: ${result.adminId}`,
+        })
+        .transacting(trx);
+      return findByJobId(data.jobId);
     });
+  } catch (error) {
+    console.log("Comment error ", error);
+  }
 }
 
 function findById(id) {
-  return db("comments").select().where("comments.id", id).first();
+  return db("comment")
+    .select("comment.*", "user.username")
+    .join("user", "user.id", "comment.editedBy")
+    .where("comment.id", id)
+    .first();
 }
 
-function updateOne(id, changes) {
-  // console.log("whats id changes ", id, changes);
-  return db("comments")
-    .where({ id })
-    .update({
-      comment: changes.comment,
-      updated_at: timestamp,
-      edited_by: changes.edited_by,
-    })
-    .then(() => {
-      return findById(id);
+async function update(id, changes) {
+  try {
+    await db.transaction(async (trx) => {
+      const ids = await trx("comment")
+        .update(
+          {
+            comment: changes.comment,
+            updatedAt: timestamp,
+            editedBy: changes.editedBy,
+          },
+          ["id", "editedBy"]
+        )
+        .transacting(trx);
+      const [result] = ids;
+      console.log("result ", result);
+      const log = await trx("log")
+        .insert({
+          userId: result.editedBy,
+          log: `Comment with id ${ids[0].id} edited by user id: ${result.editedBy}`,
+        })
+        .transacting(trx);
+      return findById(result.id);
     });
+  } catch (error) {
+    console.log("Comment edit error ", error);
+  }
 }
