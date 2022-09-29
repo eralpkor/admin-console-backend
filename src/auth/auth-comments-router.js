@@ -57,14 +57,14 @@ router.get("/comment", async (req, res) => {
   res.status(200).json(result);
 });
 
-// comment by jobId
+// CREATE comment
 router.post("/comment", async (req, res) => {
   const body = req.body;
   if (Helpers.isObjectEmpty(body))
     return res.status(409).json({ error: "Please enter something" });
 
   comment
-    .addOne(body)
+    .create(body)
     .then((comment) => {
       res.status(201).json(comment);
     })
@@ -100,8 +100,9 @@ router.put("/comment/:id", (req, res) => {
     .then((ids) => {
       if (ids) {
         comment
-          .updateOne(id, changes)
+          .update(id, changes)
           .then((data) => {
+            console.log("comment data ", data);
             res.status(201).json(data);
           })
           .catch((err) => {
