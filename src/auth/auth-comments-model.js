@@ -49,8 +49,8 @@ async function create(data) {
           log: `New comment with id ${ids[0].id} added by user id: ${result.adminId}`,
         })
         .transacting(trx);
-      return findByJobId(data.jobId);
     });
+    return findByJobId(data.jobId);
   } catch (error) {
     console.log("Comment error ", error);
   }
@@ -79,8 +79,8 @@ async function update(id, changes) {
           log: `Comment with id ${ids[0].id} edited by user id: ${result.editedBy}`,
         })
         .transacting(trx);
-      return findById(result.id);
     });
+    return findById(id);
   } catch (error) {
     console.log("Comment edit error ", error);
   }
