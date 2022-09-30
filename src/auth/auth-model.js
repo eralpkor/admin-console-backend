@@ -2,9 +2,9 @@ const db = require("../database/dbConfig");
 
 module.exports = {
   addUser,
-  findById,
+  findUnique,
   findBy,
-  editById,
+  update,
   findByName,
   findByEmail,
   find,
@@ -15,126 +15,69 @@ module.exports = {
 var timestamp = new Date().toLocaleDateString();
 
 function find() {
-  return db("users")
-    .select("users.*", "roles.role", "user_roles.role_id")
-    .join("user_roles", "user_roles.user_id", "users.id")
-    .join("roles", "roles.id", "user_roles.role_id")
-    .where("is_deleted", false);
+  return db("user").select("user.*").where("isDeleted", false);
 }
 
 function getUser(id) {
-  return db("users")
-    .select("users.*", "roles.role")
-    .join("user_roles", "user_roles.user_id", "users.id")
-    .join("roles", "roles.id", "user_roles.role_id")
-    .where("users.id", id)
-    .first();
+  return db("user").select().where({ id }).first();
 }
 
-function addUser(user) {
-  return db
-    .transaction(function (t) {
-      console.log("whats user ", user);
-      return db("users")
-        .transacting(t)
-        .select()
-        .insert(
-          {
-            username: user.username,
-            password: user.password,
-            email: user.email,
-            first_name: user.first_name,
-            last_name: user.last_name,
-          },
-          "id"
-        )
-        .then((response) => {
-          const [id] = response;
-          console.log("whats response", id);
-          return db("user_roles").transacting(t).select().insert(
-            {
-              role_id: user.role_id,
-              user_id: id,
-            },
-            "user_roles.user_id"
-          );
-        })
-        .then(t.commit)
-        .catch(t.rollback);
-    })
-    .then((response) => {
-      const [id] = response;
-      console.log("transaction succeeded ", id, response);
-      return findById(id);
-    })
-    .catch((err) => {
-      console.log("transaction failed", err);
+function addUser(data) {
+  console.log("whats new user ", data);
+  return db("user")
+    .insert(
+      {
+        username: data.username,
+        password: data.password,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        updatedAt: timestamp,
+      },
+      "id"
+    )
+    .then((ids) => {
+      const [{ id }] = ids;
+      return findUnique(id);
     });
 }
 
 // FIND user by id
-function findById(id) {
-  return db("users")
-    .select("id", "username", "first_name", "last_name", "user_roles.role_id")
-    .join("user_roles", "users.id", "user_roles.user_id")
-    .where({
-      id,
-    })
-    .first();
+function findUnique(id) {
+  return db("user").select().where({ id }).first();
 }
 
 // filter-search function for login
 function findBy(filter) {
-  return db("users")
-    .select("users.*", "roles.role")
-    .join("user_roles", "user_roles.user_id", "users.id")
-    .join("roles", "roles.id", "user_roles.role_id")
-    .where(filter);
+  return db("user").select("user.*").where(filter);
 }
 
-// Edit user info
-function editById(id, update) {
-  return db
-    .transaction(function (t) {
-      return db("users")
-        .transacting(t)
-        .select()
-        .where({ id })
-        .update(
-          {
-            username: update.username,
-            password: update.password,
-            email: update.email,
-            first_name: update.first_name,
-            last_name: update.last_name,
-            updated_at: timestamp,
-          },
-          ["id", "username", "first_name"]
-        )
-        .then(() => {
-          return db("user_roles")
-            .transacting(t)
-            .select()
-            .where("user_id", id)
-            .update({
-              role_id: update.role_id,
-            });
-        })
-        .then(t.commit)
-        .catch(t.rollback);
-    })
-    .then(() => {
-      console.log("transaction succeeded ", id);
-      return findById(id);
-    })
-    .catch((err) => {
-      console.log("transaction failed", err);
+function update(id, data) {
+  return db("user")
+    .where({ id })
+    .update(
+      {
+        username: data.username,
+        password: data.password,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        updatedAt: timestamp,
+      },
+      "id"
+    )
+    .then((ids) => {
+      const [{ id }] = ids;
+
+      return findUnique(id);
     });
 }
 
 // for validation
 function findByName(username) {
-  return db("users")
+  return db("user")
     .select("username")
     .where({
       username,
@@ -144,7 +87,7 @@ function findByName(username) {
 
 // for validation
 function findByEmail(email) {
-  return db("users")
+  return db("user")
     .select("email")
     .where({
       email,
@@ -154,5 +97,5 @@ function findByEmail(email) {
 
 // DELETE user
 function deleteOne(id) {
-  return db("users").where({ id }).update({ is_deleted: true });
+  return db("user").where({ id }).update({ is_deleted: true });
 }
