@@ -3,32 +3,29 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return (
-    knex.schema
-      .createTable("accounts", (tbl) => {
-        // account and customer number same
-        tbl.increments();
-        tbl.integer("job_id").unsigned();
-        tbl.foreign("job_id").references("jobs.id");
-        tbl.float("total", 2);
-        tbl.float("balance", 2);
-        tbl.timestamp("created_at").defaultTo(knex.fn.now());
-        tbl.timestamp("updated_at").defaultTo(knex.fn.now());
-        tbl.boolean("is_deleted").defaultTo(false);
-      })
-      // Payments goes here
-      .createTable("payments", (tbl) => {
-        tbl.increments();
-        tbl.integer("account_id").unsigned();
-        tbl.foreign("account_id").references("accounts.id");
-        tbl.string("payment_type");
-        tbl.string("check_number");
-        tbl.float("amount_paid", 2);
-        tbl.timestamp("created_at").defaultTo(knex.fn.now());
-        tbl.timestamp("updated_at").defaultTo(knex.fn.now());
-        tbl.boolean("is_deleted").defaultTo(false); // set to true when deleted
-      })
-  );
+  return knex.schema.createTable("payment", (tbl) => {
+    tbl.increments();
+    tbl.date("createdAt").defaultTo(knex.fn.now());
+    tbl.date("updatedAt");
+    tbl
+      .enu("paymentType", ["CASH", "CHECK", "CREDIT", "ACH"])
+      .defaultTo("CASH");
+    tbl
+      .integer("userId")
+      .unsigned()
+      .notNullable()
+      .references("id")
+      .inTable("user");
+    tbl.integer("editedBy");
+    tbl.float("amountPaid", 2).defaultTo(0);
+    tbl
+      .integer("jobId")
+      .unsigned()
+      .notNullable()
+      .references("id")
+      .inTable("job");
+    tbl.boolean("isDeleted").defaultTo(false);
+  });
 };
 
 /**
@@ -36,7 +33,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema
-    .dropTableIfExists("accounts")
-    .dropTableIfExists("payments");
+  return knex.schema.dropTableIfExists("payment");
 };
