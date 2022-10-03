@@ -4,14 +4,14 @@ module.exports = async (req, res, next) => {
   const errors = [];
 
   function validateCustomer(user) {
-    !user.first_name && errors.push({ first_name: "required" });
-    !user.last_name && errors.push({ last_name: "required" });
+    !user.firstName && errors.push({ firstName: "required" });
+    !user.lastName && errors.push({ lastName: "required" });
     !user.email && errors.push({ email: "required" });
     // user.is_admin === 0 || user.is_admin === 1 && errors.push({ is_admin: "required" });
 
     //Validate Char Length
     Object.keys(user).map((x) => {
-      if (x === "first_name" || x === "last_name" || x === "email") {
+      if (x === "firstName" || x === "lastName" || x === "email") {
         const key = user[x].length;
 
         //Verify Length Min
