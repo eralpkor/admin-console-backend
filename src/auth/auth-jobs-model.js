@@ -107,33 +107,19 @@ async function update(id, job) {
           "id"
         )
         .transacting(trx);
-      console.log("whats job id ", ids[0].id);
-      const payment = await trx("payment")
-        .where("payment.jobId", ids[0].id)
-        .update(
-          {
-            updatedAt: timestamp,
-            userId: job.userId,
-            paymentType: job.paymentType,
-            amountPaid: job.amountPaid,
-            editedBy: job.adminId,
-          },
-          ["id", "jobId"]
-        )
-        .transacting(trx);
-      const [result] = payment;
-      console.log("whats result ", result);
+
+      const [result] = ids;
       // Calculate all payments
       const paymentTotal = await trx("payment")
-        .where("jobId", result.jobId)
+        .where("jobId", result.id)
         .sum("amountPaid as sum")
         .transacting(trx);
 
       let sum = paymentTotal[0].sum;
-      console.log("whats sum ", sum);
+
       // Calculate the new balance
       const balance = await trx("job")
-        .where("id", result.jobId)
+        .where("id", result.id)
         .update({
           balance: db.raw(`job.total - ${sum}`),
         })
@@ -145,6 +131,7 @@ async function update(id, job) {
           log: `Job with id ${ids[0].id} updated by user id: ${job.adminId}`,
         })
         .transacting(trx);
+      console.log("job id? ", ids[0].id);
       return findById(ids[0].id);
     });
   } catch (error) {
@@ -158,7 +145,6 @@ function find(id) {
 }
 
 function findById(id) {
-  console.log("what id ", id);
   return (
     db("job")
       .where("job.id", id)
