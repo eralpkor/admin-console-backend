@@ -36,14 +36,17 @@ router.get("/comment", async (req, res) => {
     }
 
     if (req.query.filter) {
-      let search = await JSON.parse(req.query.filter);
-      let { id } = await search;
-
-      if (id) {
-        result = result.filter((x) => id.includes(x.jobId));
+      let query = await JSON.parse(req.query.filter);
+      if (query.jobId) {
+        result = result.filter((x) => {
+          return [query.jobId].includes(x.jobId);
+        });
       }
-      if (search.comment) {
-        let query = search.comment.toLowerCase().trim();
+      if (query.id) {
+        result = result.filter((x) => query.id.includes(x.jobId));
+      }
+      if (query.comment) {
+        let query = query.comment.toLowerCase().trim();
         result = result.filter((x) => {
           let c = x.comment.toLowerCase();
           return c.includes(query);
@@ -94,7 +97,7 @@ router.put("/comment/:id", (req, res) => {
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
-  console.log("edit comment ", id, changes);
+
   comment
     .findById(id)
     .then((ids) => {
@@ -102,8 +105,7 @@ router.put("/comment/:id", (req, res) => {
         comment
           .update(id, changes)
           .then((data) => {
-            console.log("comment data ", data);
-            res.status(201).json(data);
+            res.status(200).json(data);
           })
           .catch((err) => {
             console.log(err);
