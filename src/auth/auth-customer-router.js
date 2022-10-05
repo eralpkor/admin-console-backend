@@ -35,19 +35,19 @@ router.get("/customer", async (req, res) => {
     if (req.query.filter) {
       search = await JSON.parse(req.query.filter);
 
-      if (search.first_name) {
-        let query = search.first_name.toLowerCase().trim();
+      if (search.firstName) {
+        let query = search.firstName.toLowerCase().trim();
 
         result = result.filter((x) => {
-          let j = x.first_name.toLowerCase();
+          let j = x.firstName.toLowerCase();
           return j.includes(query);
         });
       }
-      if (search.last_name) {
-        let query = search.last_name.toLowerCase().trim();
+      if (search.lastName) {
+        let query = search.lastName.toLowerCase().trim();
 
         result = result.filter((x) => {
-          let j = x.last_name.toLowerCase();
+          let j = x.lastName.toLowerCase();
           return j.includes(query);
         });
       }
