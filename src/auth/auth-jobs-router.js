@@ -51,10 +51,10 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
           return j.includes(query);
         });
       }
-      if (search.userId) {
-        let query = search.userId.toLowerCase().trim();
+      if (search.username) {
+        let query = search.username.toLowerCase().trim();
         result = result.filter((x) => {
-          let j = x.userId.toLowerCase();
+          let j = x.username.toLowerCase();
           return j.includes(query);
         });
       }
@@ -66,7 +66,9 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
         });
       }
       if (search.inProgress) {
+        console.log("inprogress ", search.inProgress);
         let query = search.inProgress.toLowerCase().trim();
+
         result = result.filter((x) => {
           let j = x.inProgress.toLowerCase();
           return j.includes(query);
@@ -85,8 +87,8 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
 router.get("/job/:id", jwt.checkToken(), async (req, res) => {
   const { id } = req.params;
   const job = await Jobs.findById(id);
-  // const comments = await Comments.findByJobId(id);
-  let payment = await Payments.findByJobId(id);
+  // const comment = await Comments.findByJobId(id);
+  // let payment = await Payments.findByJobId(id);
 
   try {
     if (job) {
@@ -94,7 +96,11 @@ router.get("/job/:id", jwt.checkToken(), async (req, res) => {
       //   payments = [];
       // }
       // res.status(200).json(job);
-      res.status(200).json({ ...job, payment }); // , comments, payments
+      res.status(200).json({
+        ...job,
+        //  payment,
+        //  comment
+      }); // , comments, payments
     } else {
       res.status(400).json({ message: "That job does not exist" });
     }
@@ -138,7 +144,11 @@ router.put("/job/:id", jwt.checkToken(), async (req, res) => {
       const payment = await Payments.findByJobId(id);
       const comment = await Comments.findByJobId(id);
       const upJob = await Jobs.findById(id);
-      res.status(201).json({ ...upJob, payment, comment });
+      res.status(201).json({
+        ...upJob,
+        payment,
+        comment,
+      });
     } else {
       console.log("No job");
       res.status(404).json({ message: `No job with given id: ${id} ` });
