@@ -11,10 +11,7 @@ module.exports = {
 var timestamp = new Date().toLocaleDateString();
 
 function find() {
-  return db("comment")
-    .select("comment.*", "user.username")
-    .join("user", "user.id", "comment.editedBy")
-    .andWhere("comment.isDeleted", false);
+  return db("comment").select("*").andWhere("comment.isDeleted", false);
 }
 
 function findByJobId(id) {
@@ -43,10 +40,11 @@ async function create(data) {
         .transacting(trx);
 
       const [result] = ids;
+
       const log = await trx("log")
         .insert({
           userId: result.userId,
-          log: `New comment with id ${ids[0].id} added by user id: ${result.adminId}`,
+          log: `New comment with id ${ids[0].id} added by user id: ${result.editedBy}`,
         })
         .transacting(trx);
     });
@@ -76,10 +74,11 @@ async function update(id, changes) {
       const log = await trx("log")
         .insert({
           userId: result.editedBy,
-          log: `Comment with id ${ids[0].id} edited by user id: ${result.editedBy}`,
+          log: `Comment with id ${ids[0].id} edited by user: ${result.editedBy}`,
         })
         .transacting(trx);
     });
+    console.log("whats id comment ", id);
     return findById(id);
   } catch (error) {
     console.log("Comment edit error ", error);
