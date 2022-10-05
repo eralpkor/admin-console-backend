@@ -11,7 +11,7 @@ function time() {
 
 let now = time().toLocaleString();
 
-const progress = ["open", "in-progress", "closed"];
+const progress = ["OPEN", "IN-PROGRESS", "CLOSED"];
 
 Array.prototype.randomProgress = function () {
   return this[Math.floor(Math.random() * this.length)];
@@ -26,13 +26,15 @@ function randomNumber(min, max) {
 }
 
 const createFakeJobs = () => ({
-  job_title: faker.random.words(),
-  job_description: faker.random.words(10),
-  due_date: now,
-  in_progress: progress.randomProgress(),
-  assigned_to: randomNumber(4, 7),
-  customer_id: randomNumber(1, 20),
-  admin_id: 2,
+  title: faker.random.words(),
+  description: faker.random.words(10),
+  dueDate: now,
+  updatedAt: now,
+  inProgress: "OPEN",
+  userId: randomNumber(4, 7),
+  customerId: randomNumber(1, 20),
+  adminId: randomNumber(1, 3),
+  total: 1000.0,
 });
 
 exports.seed = async function (knex) {
@@ -42,6 +44,6 @@ exports.seed = async function (knex) {
     fakeJobs.push(createFakeJobs());
   }
   // Deletes ALL existing entries
-  await knex("jobs").del();
-  await knex("jobs").insert(fakeJobs);
+  await knex("job").del();
+  await knex("job").insert(fakeJobs);
 };

@@ -13,9 +13,8 @@ var timestamp = new Date().toLocaleDateString();
 
 function find() {
   return db("payment")
-    .select("payment.*", "user.username as editedBy", "job.title")
+    .select("payment.*", "user.username as editedBy")
     .join("user", "user.id", "payment.editedBy")
-    .join("job", "job.id", "payment.jobId")
     .where("payment.isDeleted", false);
 }
 
@@ -71,9 +70,10 @@ async function create(payment) {
 }
 
 async function update(id, payment) {
+  let ids = [];
   try {
     await db.transaction(async (trx) => {
-      const ids = await trx("payment")
+      ids = await trx("payment")
         .where({ id })
         .update(
           {
@@ -85,12 +85,12 @@ async function update(id, payment) {
           ["id", "jobId"]
         )
         .transacting(trx);
-
       const [result] = ids;
       const paymentTotal = await trx("payment")
         .where("jobId", result.jobId)
         .sum("amountPaid as sum")
-        .transacting(trx);
+        .transacting(trx)
+        .returning("id");
 
       let sum = paymentTotal[0].sum;
       const balance = await trx("job")
@@ -99,8 +99,8 @@ async function update(id, payment) {
           balance: db.raw(`total - ${sum}`),
         })
         .transacting(trx);
-      return findById(result.id);
     });
+    return findById(ids[0].id);
   } catch (error) {
     console.log(error);
   }

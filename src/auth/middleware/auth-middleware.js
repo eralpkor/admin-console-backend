@@ -4,7 +4,7 @@ const secret = process.env.JWT_SECRET;
 
 module.exports = (req, res, next) => {
   const token = req.headers.authorization;
-
+  // console.log("whats token ", token);
   if (token) {
     jwt.verify(token, secret, async (err, decodedToken) => {
       if (err) {
@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
           .json({ message: "Invalid Token, you will need to Log back in" });
       } else {
         req.decodedToken = decodedToken;
-        console.log("What is decoded token ", decodedToken);
+        // console.log("What is decoded token ", decodedToken);
         next();
       }
     });

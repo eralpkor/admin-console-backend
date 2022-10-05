@@ -11,7 +11,7 @@ exports.up = function (knex) {
     tbl.date("updatedAt");
     tbl.string("title", 128).notNullable();
     tbl.string("description", 256).notNullable();
-    tbl.enu("inProgress", ["OPEN", "IN-PROGRESS", "CLOSED"]).defaultTo("OPEN");
+    tbl.enu("inProgress", ["OPEN", "INPROGRESS", "CLOSED"]).defaultTo("OPEN");
     tbl
       .integer("userId")
       .unsigned()

@@ -7,10 +7,12 @@ const bcrypt = require("bcryptjs");
 const jwt = require("./middleware/jwtAccess");
 const Users = require("./auth-model");
 const Helpers = require("./middleware/helpers");
+const authenticate = require("../auth/middleware/auth-middleware");
 
 // POST /api/auth/login login user - FUNCTIONAL
-router.post("/authenticate", validateLogin, (req, res) => {
+router.post("/authenticate", validateLogin, async (req, res) => {
   const { username, password } = req.body;
+
   Users.findBy({ username })
     .first()
     .then((u) => {
@@ -22,9 +24,8 @@ router.post("/authenticate", validateLogin, (req, res) => {
           user: u.username,
           token,
           id: u.id,
-          first_name: u.first_name,
-          last_name: u.last_name,
-          role_id: u.role_id,
+          firstName: u.firstName,
+          lastName: u.lastName,
           role: u.role,
         });
       } else {
@@ -37,11 +38,12 @@ router.post("/authenticate", validateLogin, (req, res) => {
       res.status(500).json(err);
     });
 });
-// POST /auth/register register new user - FUNCTIONAL
-router.post("/users", validateNewUser, (req, res) => {
+// POST /auth/register create new user - FUNCTIONAL
+router.post("/user", validateNewUser, async (req, res) => {
   const user = req.body;
   const hash = bcrypt.hashSync(user.password, HashFactor);
   user.password = hash;
+
   Users.addUser(user)
     .then((newUser) => {
       const token = jwt.generateToken(newUser);
@@ -53,30 +55,55 @@ router.post("/users", validateNewUser, (req, res) => {
     });
 });
 
+// http://localhost:5000/api/users?filter={"id":[7]}
+// http://localhost:5000/api/users?filter={}&range=[0,9]&sort=["id","ASC"]
 // GET display all of the users
-// IMPORTANT IMPLEMENT SECURITY
-router.get("/users", async (req, res) => {
-  let columnName, order, columnId, id;
-  if (req.query.sort) {
-    columnName = await JSON.parse(req.query.sort)[0];
-    order = await JSON.parse(req.query.sort)[1];
-  }
-  if (req.query.filter) {
-    columnId = await JSON.parse(req.query.filter);
-    if (columnId.id) {
-      id = columnId.id[0];
+router.get("/user", jwt.checkToken(), async (req, res, next) => {
+  let columnName, order, columnId, id, startIndex, endIndex;
+  // const token = req.headers.authorization;
+  // const userToken = jwt.checkToken();
+  // console.log(userToken);
+  // if (userToken.role === "USER") {
+  //   res
+  //     .status(401)
+  //     .json({ message: "You are not authorized to see this page..." });
+  //   // return res.send();
+  // }
+  try {
+    if (req.query.range) {
+      startIndex = await JSON.parse(req.query.range)[0];
+      endIndex = await JSON.parse(req.query.range)[1];
     }
+    if (req.query.sort) {
+      columnName = await JSON.parse(req.query.sort)[0];
+      order = await JSON.parse(req.query.sort)[1];
+    }
+    if (req.query.filter) {
+      columnId = await JSON.parse(req.query.filter);
+      if (columnId.id) {
+        id = await JSON.parse(columnId.id[0]);
+      }
+    }
+  } catch (error) {
+    console.log("Wrong JSON ", error);
   }
+
   Users.find()
     .then((users) => {
       res.setHeader(`Content-Range`, users.length);
+      const result = users.slice(startIndex, endIndex);
+      let sorted = result;
 
-      let sorted = users;
       if (order === "ASC") {
-        sorted = Helpers.sortAsc(users, columnName);
+        sorted = Helpers.sortAsc(result, columnName);
       }
       if (order === "DESC") {
-        sorted = Helpers.sortDesc(users, columnName);
+        sorted = Helpers.sortDesc(result, columnName);
+      }
+      if (columnId.id) {
+        sorted = result.filter((user) => {
+          return columnId.id.includes(user.id);
+        });
       }
       res.status(200).json(sorted);
     })
@@ -86,33 +113,8 @@ router.get("/users", async (req, res) => {
     });
 });
 
-// GET filter-search user ie: "/filter?username=jatinder or ?id=2"
-//http://localhost:5000?city=Metropolis&age=21
-router.get("/filter", jwt.checkToken(), (req, res) => {
-  const filters = req.query;
-  if (!req.user.isAdmin) {
-    res
-      .status(401)
-      .json({ message: "You are not authorized to see this page..." });
-    return res.send();
-  }
-
-  Users.findBy(filters)
-    .then((user) => {
-      if (user.length > 0) {
-        res.status(200).json({ user: user });
-      } else {
-        res.status(404).json({ message: "User does not exist..." });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ error: `internal server error ${err}` });
-    });
-});
-
 // GET display single user by id
-router.get("/users/:id", (req, res) => {
+router.get("/user/:id", (req, res) => {
   const id = req.params.id;
   // if (!req.user.isAdmin) {
   //   res
@@ -135,7 +137,7 @@ router.get("/users/:id", (req, res) => {
 });
 
 // PUT /api/auth/update Edit user information - FUNCTIONAL
-router.put("/users/:id", (req, res) => {
+router.put("/user/:id", (req, res) => {
   // const userId = req.user.subject;
   const userId = req.params.id;
   const changes = req.body;
@@ -148,8 +150,10 @@ router.put("/users/:id", (req, res) => {
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
-
-  Users.findById(userId)
+  if (changes.role_id > 3) {
+    res.status(422).json({ error: "Choose between 1-3..." });
+  }
+  Users.findUnique(userId)
     .then((u) => {
       if (u.id == userId) {
         if (changes.password) {
@@ -157,9 +161,9 @@ router.put("/users/:id", (req, res) => {
           changes.password = hash;
         }
 
-        Users.editById(userId, changes)
+        Users.update(userId, changes)
           .then((user) => {
-            console.log(user);
+            // console.log("what is edit user ", user);
             res.status(200).json(user);
           })
           .catch((err) => {
@@ -179,10 +183,10 @@ router.put("/users/:id", (req, res) => {
 });
 
 // DELETE user
-router.delete("/users/:id", (req, res) => {
+router.delete("/user/:id", (req, res) => {
   const { id } = req.params;
 
-  Users.findById(id)
+  Users.findUnique(id)
     .then((user) => {
       if (user) {
         Users.deleteOne(id)

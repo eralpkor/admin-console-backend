@@ -5,66 +5,81 @@
 // seed:run --specific=
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
+var timestamp = new Date().toLocaleDateString();
 
 exports.seed = async function (knex) {
   // Deletes ALL existing entries
-  await knex("users").del();
-  await knex("users").insert([
+  await knex("user").del();
+  await knex("user").insert([
     {
       username: "jatinder",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Jatinder",
-      last_name: "Sharma",
+      firstName: "Jatinder",
+      lastName: "Sharma",
       email: "jatinder@aexperts.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "SUPERADMIN",
+      updatedAt: timestamp,
     },
     {
       username: "eralp",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Eralp",
-      last_name: "Kor",
+      firstName: "Eralp",
+      lastName: "Kor",
       email: "eralp.ny@gmail.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "SUPERADMIN",
+      updatedAt: timestamp,
     },
     {
       username: "sunny",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Sunny",
-      last_name: "Kor",
+      firstName: "Sunny",
+      lastName: "Kor",
       email: "sunny@gmail.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "ADMIN",
+      updatedAt: timestamp,
     },
     {
       username: "susan",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Susan",
-      last_name: "Kor",
+      firstName: "Susan",
+      lastName: "Kor",
       email: "susan@gmail.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "USER",
+      updatedAt: timestamp,
     },
     {
       username: "johnathan",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Jon",
-      last_name: "Got",
+      firstName: "Jon",
+      lastName: "Got",
       email: "John@gmail.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "USER",
+      updatedAt: timestamp,
     },
     {
       username: "kai_kor",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Kai",
-      last_name: "Kor",
+      firstName: "Kai",
+      lastName: "Kor",
       email: "kai@gmail.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "USER",
+      updatedAt: timestamp,
     },
     {
       username: "norman",
       password: bcrypt.hashSync(process.env.USER_PASSWORD, 8),
-      first_name: "Norman",
-      last_name: "Kor",
+      firstName: "Norman",
+      lastName: "Kor",
       email: "norman1@gmail.com",
-      is_deleted: false,
+      isDeleted: false,
+      role: "USER",
+      updatedAt: timestamp,
     },
   ]);
 };

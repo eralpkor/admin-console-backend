@@ -3,13 +3,25 @@
  * @returns { Promise<void> }
  */
 exports.up = function (knex) {
-  return knex.schema.createTable("comments", (tbl) => {
+  return knex.schema.createTable("comment", (tbl) => {
     tbl.increments();
-    tbl.timestamp("created_at").defaultTo(knex.fn.now());
-    tbl.timestamp("updated_at").defaultTo(knex.fn.now());
-    tbl.string("comment", 512);
-    tbl.boolean("is_deleted").defaultTo(false); // set to true when deleted
-    tbl.integer("job_id").unsigned().references("id").inTable("jobs");
+    tbl.date("createdAt").defaultTo(knex.fn.now());
+    tbl.date("updatedAt");
+    tbl.string("comment", 1025);
+    tbl
+      .integer("userId")
+      .unsigned()
+      .notNullable()
+      .references("id")
+      .inTable("user");
+    tbl.integer("editedBy");
+    tbl
+      .integer("jobId")
+      .unsigned()
+      .notNullable()
+      .references("id")
+      .inTable("job");
+    tbl.boolean("isDeleted").defaultTo(false);
   });
 };
 
@@ -18,5 +30,5 @@ exports.up = function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = function (knex) {
-  return knex.schema.dropTableIfExists("comments");
+  return knex.schema.dropTableIfExists("comment");
 };
