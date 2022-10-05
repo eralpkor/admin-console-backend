@@ -13,8 +13,8 @@ module.exports = {
 var timestamp = new Date().toLocaleDateString();
 
 // ********** JOB related model from here *****************
-// Find all job and return
 
+// Find all job and return
 function findMany() {
   return db("job")
     .select(
