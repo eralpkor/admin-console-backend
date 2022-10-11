@@ -59,69 +59,62 @@ router.post("/user", validateNewUser, async (req, res) => {
 // http://localhost:5000/api/users?filter={}&range=[0,9]&sort=["id","ASC"]
 // GET display all of the users
 router.get("/user", jwt.checkToken(), async (req, res, next) => {
-  let columnName, order, columnId, id, startIndex, endIndex;
-  // const token = req.headers.authorization;
-  // const userToken = jwt.checkToken();
-  // console.log(userToken);
-  // if (userToken.role === "USER") {
-  //   res
-  //     .status(401)
-  //     .json({ message: "You are not authorized to see this page..." });
-  //   // return res.send();
-  // }
+  let columnName, order, limit, page, contentRange;
+  const role = req.user.role;
+
+  if (role !== "SUPERADMIN") {
+    res
+      .status(401)
+      .json({ message: "You're not authorized to view this page" });
+    return;
+  }
+
+  try {
+    result = await Users.find();
+    contentRange = result.length;
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Cannot get database..." });
+  }
+  // Pagination
   try {
     if (req.query.range) {
-      startIndex = await JSON.parse(req.query.range)[0];
-      endIndex = await JSON.parse(req.query.range)[1];
+      page = await JSON.parse(req.query.range)[0];
+      limit = await JSON.parse(req.query.range)[1];
+
+      result = result.slice(page, limit);
     }
+    // sorting
     if (req.query.sort) {
       columnName = await JSON.parse(req.query.sort)[0];
       order = await JSON.parse(req.query.sort)[1];
+      if (order === "ASC") {
+        result = Helpers.sortAsc(result, columnName);
+      }
+      if (order === "DESC") {
+        result = Helpers.sortDesc(result, columnName);
+      }
     }
+    // Filter / search
     if (req.query.filter) {
-      columnId = await JSON.parse(req.query.filter);
-      if (columnId.id) {
-        id = await JSON.parse(columnId.id[0]);
+      let query = await JSON.parse(req.query.filter);
+      if (query.id) {
+        result = result.filter((x) => {
+          return [query.id].includes(x.id);
+        });
       }
     }
   } catch (error) {
     console.log("Wrong JSON ", error);
   }
-
-  Users.find()
-    .then((users) => {
-      res.setHeader(`Content-Range`, users.length);
-      const result = users.slice(startIndex, endIndex);
-      let sorted = result;
-
-      if (order === "ASC") {
-        sorted = Helpers.sortAsc(result, columnName);
-      }
-      if (order === "DESC") {
-        sorted = Helpers.sortDesc(result, columnName);
-      }
-      if (columnId.id) {
-        sorted = result.filter((user) => {
-          return columnId.id.includes(user.id);
-        });
-      }
-      res.status(200).json(sorted);
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({ message: "Cannot get users..." });
-    });
+  res.setHeader(`Content-Range`, contentRange);
+  res.status(200).json(result);
 });
 
 // GET display single user by id
 router.get("/user/:id", (req, res) => {
   const id = req.params.id;
-  // if (!req.user.isAdmin) {
-  //   res
-  //     .status(401)
-  //     .json({ message: "You are not authorized to see this page..." });
-  //   return res.send();
-  // }
+
   Users.getUser(id)
     .then((user) => {
       if (user) {
@@ -138,15 +131,10 @@ router.get("/user/:id", (req, res) => {
 
 // PUT /api/auth/update Edit user information - FUNCTIONAL
 router.put("/user/:id", (req, res) => {
-  // const userId = req.user.subject;
+  const role = req.user.role;
   const userId = req.params.id;
   const changes = req.body;
-  // if (!req.user.isAdmin) {
-  //   res
-  //     .status(401)
-  //     .json({ message: "You are not authorized to see this page..." });
-  //   return res.send();
-  // }
+
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
