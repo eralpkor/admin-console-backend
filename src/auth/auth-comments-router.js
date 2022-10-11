@@ -10,20 +10,23 @@ require("dotenv").config();
 // http://localhost:5000/api/jobs?filter={}&range=[0,24]&sort=["job_description","DESC"]
 router.get("/comment", async (req, res) => {
   let result = [];
-  let columnName, order, startIndex, endIndex;
+  let columnName, order, limit, page, contentRange;
 
   try {
     result = await comment.find();
+    contentRange = result.length;
   } catch (error) {
     res.status(500).json({ error: "Cannot get database..." });
   }
 
+  // PAGINATION
   try {
     if (req.query.range) {
-      startIndex = await JSON.parse(req.query.range)[0];
-      endIndex = await JSON.parse(req.query.range)[1];
-      result = result.slice(startIndex, endIndex);
+      page = await JSON.parse(req.query.range)[0];
+      limit = await JSON.parse(req.query.range)[1];
+      result = result.slice(page, limit);
     }
+    // SORT order
     if (req.query.sort) {
       columnName = await JSON.parse(req.query.sort)[0];
       order = await JSON.parse(req.query.sort)[1];
@@ -35,6 +38,7 @@ router.get("/comment", async (req, res) => {
       }
     }
 
+    // SEARCH
     if (req.query.filter) {
       let query = await JSON.parse(req.query.filter);
       if (query.jobId) {
@@ -56,7 +60,7 @@ router.get("/comment", async (req, res) => {
   } catch (error) {
     console.log("Wrong JSON ", error);
   }
-  res.setHeader(`Content-Range`, result.length);
+  res.setHeader(`Content-Range`, contentRange);
   res.status(200).json(result);
 });
 
