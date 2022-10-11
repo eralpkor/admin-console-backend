@@ -11,20 +11,22 @@ require("dotenv").config();
 // http://localhost:5000/api/jobs?filter={}&range=[0,9]&sort=["title","DESC"]
 // http://localhost:5000/api/jobs?filter={"title":"job 2"}&range=[0,9]&sort=["id","ASC"]
 router.get("/job", jwt.checkToken(), async (req, res) => {
+  const role = req.decodedToken.role;
   let result = [];
-  let columnName, order, search, startIndex, endIndex;
+  let columnName, order, limit, page, contentRange;
 
   try {
     result = await Jobs.findMany();
+    contentRange = result.length;
   } catch (error) {
     res.status(500).json({ error: "Cannot get database..." });
   }
 
   try {
     if (req.query.range) {
-      startIndex = await JSON.parse(req.query.range)[0];
-      endIndex = await JSON.parse(req.query.range)[1];
-      result = result.slice(startIndex, endIndex);
+      page = await JSON.parse(req.query.range)[0];
+      limit = await JSON.parse(req.query.range)[1];
+      result = result.slice(page, limit);
     }
     if (req.query.sort) {
       columnName = await JSON.parse(req.query.sort)[0];
@@ -79,7 +81,7 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
     console.log("Wrong JSON ", error);
   }
 
-  res.setHeader(`Content-Range`, result.length);
+  res.setHeader(`Content-Range`, contentRange);
   res.status(200).json(result);
 });
 
@@ -87,19 +89,11 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
 router.get("/job/:id", jwt.checkToken(), async (req, res) => {
   const { id } = req.params;
   const job = await Jobs.findById(id);
-  // const comment = await Comments.findByJobId(id);
-  // let payment = await Payments.findByJobId(id);
 
   try {
     if (job) {
-      // if (payments.length === 1 && payments[0].amount_paid === 0) {
-      //   payments = [];
-      // }
-      // res.status(200).json(job);
       res.status(200).json({
         ...job,
-        //  payment,
-        //  comment
       }); // , comments, payments
     } else {
       res.status(400).json({ message: "That job does not exist" });
