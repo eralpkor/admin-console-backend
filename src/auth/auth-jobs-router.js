@@ -151,28 +151,6 @@ router.put("/job/:id", jwt.checkToken(), async (req, res) => {
     console.log(error);
     res.status(500).json({ error: "Server error" });
   }
-
-  // Jobs.find(id)
-  //   .then((ids) => {
-  //     if (ids) {
-  //       console.log("router ids ", ids);
-  //       Jobs.update(id, changes)
-  //         .then((job) => {
-  //           console.log("update job ", job);
-  //           res.status(200).json(job);
-  //         })
-  //         .catch((err) => {
-  //           console.log(err);
-  //           res.status(404).json({ error: "No change happened..." });
-  //         });
-  //     } else {
-  //       res.status(404).json({ message: `No job with given id: ${id} ` });
-  //     }
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //     res.status(500).json({ error: "Server error" });
-  //   });
 });
 
 router.delete("/job/:id", jwt.checkToken(), (req, res) => {
