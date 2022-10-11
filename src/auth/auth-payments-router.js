@@ -5,20 +5,22 @@ const Payments = require("./auth-payments-model");
 require("dotenv").config();
 
 router.get("/payment", async (req, res) => {
+  const role = req.decodedToken.role;
   let result = [];
-  let columnName, order, startIndex, endIndex;
+  let columnName, order, limit, page, contentRange;
 
   try {
     result = await Payments.find();
+    contentRange = result.length;
   } catch (error) {
     res.status(500).json({ error: "Cannot get database..." });
   }
 
   try {
     if (req.query.range) {
-      startIndex = await JSON.parse(req.query.range)[0];
-      endIndex = await JSON.parse(req.query.range)[1];
-      result = result.slice(startIndex, endIndex);
+      page = await JSON.parse(req.query.range)[0];
+      limit = await JSON.parse(req.query.range)[1];
+      result = result.slice(page, limit);
     }
     if (req.query.sort) {
       columnName = await JSON.parse(req.query.sort)[0];
@@ -47,7 +49,7 @@ router.get("/payment", async (req, res) => {
   } catch (error) {
     console.log("Wrong JSON ", error);
   }
-  res.setHeader(`Content-Range`, result.length);
+  res.setHeader(`Content-Range`, contentRange);
   res.status(200).json(result);
 });
 
