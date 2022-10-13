@@ -98,9 +98,10 @@ router.get("/user", jwt.checkToken(), async (req, res, next) => {
     // Filter / search
     if (req.query.filter) {
       let query = await JSON.parse(req.query.filter);
-      if (query.id) {
+
+      if (Array.isArray(query.id)) {
         result = result.filter((x) => {
-          return [query.id].includes(x.id);
+          return query.id.includes(x.id);
         });
       }
     }
@@ -131,7 +132,6 @@ router.get("/user/:id", (req, res) => {
 
 // PUT /api/auth/update Edit user information - FUNCTIONAL
 router.put("/user/:id", (req, res) => {
-  const role = req.user.role;
   const userId = req.params.id;
   const changes = req.body;
 
@@ -151,7 +151,6 @@ router.put("/user/:id", (req, res) => {
 
         Users.update(userId, changes)
           .then((user) => {
-            // console.log("what is edit user ", user);
             res.status(200).json(user);
           })
           .catch((err) => {
