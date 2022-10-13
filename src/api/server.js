@@ -8,12 +8,13 @@ const authenticate = require("../auth/middleware/auth-middleware");
 const customerRouter = require("../auth/auth-customer-router");
 const paymentsRouter = require("../auth/auth-payments-router");
 const commentsRouter = require("../auth/auth-comments-router");
+const logsRouter = require("../auth/auth-log-router");
 const server = express();
 
 let corsOptions = {
   origin: "*",
   optionsSuccessStatus: 200,
-  exposedHeaders: ["Content-Range"],
+  exposedHeaders: ["Content-Range"], // add X-Content-Range
 };
 
 server.use(helmet());
@@ -25,6 +26,7 @@ server.use("/api", authenticate, commentsRouter);
 server.use("/api", authenticate, paymentsRouter);
 server.use("/api", authenticate, jobsRouter);
 server.use("/api", authenticate, customerRouter);
+server.use("/api", authenticate, logsRouter);
 
 server.get("/", (req, res) => {
   res.send("<h2>Let's cook something! 🌽🥕 😄</h2>");
