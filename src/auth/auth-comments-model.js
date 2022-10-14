@@ -47,7 +47,7 @@ async function create(data) {
       const log = await trx("log")
         .insert({
           userId: result.userId,
-          log: `New comment with id ${ids[0].id} added by user id: ${result.editedBy}`,
+          log: `New comment added to job ${ids[0].jobId} added by user id: ${result.editedBy}`,
         })
         .transacting(trx);
     });
