@@ -44,7 +44,6 @@ function updateCustomer(id, changes) {
 }
 
 function create(changes) {
-  console.log("add customer ", changes);
   return db("customer")
     .insert(
       {
