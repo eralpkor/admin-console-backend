@@ -1,3 +1,5 @@
+const { options } = require("../../auth/auth-comments-router");
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
@@ -10,8 +12,10 @@ exports.up = function (knex) {
     tbl.date("createdAt").defaultTo(knex.fn.now());
     tbl.date("updatedAt");
     tbl.string("title", 128).notNullable();
-    tbl.string("description", 256).notNullable();
-    tbl.enu("inProgress", ["OPEN", "INPROGRESS", "CLOSED"]).defaultTo("OPEN");
+    tbl.string("description", 1024).notNullable();
+    tbl
+      .enu("inProgress", ["OPEN", "INPROGRESS", "CLOSED"])
+      .defaultTo("OPEN", (options = {}));
     tbl
       .integer("userId")
       .unsigned()
