@@ -26,8 +26,6 @@ router.get("/comment", async (req, res) => {
 
       if (!!Object.keys(query).length) {
         if (Array.isArray(query.id)) {
-          console.log("ARRAY ", query.id);
-
           result = result.filter((x) => {
             return query.id.includes(x.id);
           });
