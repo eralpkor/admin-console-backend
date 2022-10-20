@@ -16,16 +16,20 @@ var timestamp = new Date().toLocaleDateString();
 
 // Find all job and return
 function findMany() {
-  return db("job")
-    .select(
-      "job.*",
-      "customer.firstName",
-      "customer.lastName",
-      "user.username as username"
-    )
-    .join("customer", "customer.id", "job.customerId")
-    .join("user", "user.id", "job.userId")
-    .andWhere("job.isDeleted", false);
+  return (
+    db("job")
+      .select(
+        "job.*",
+        "customer.firstName",
+        "customer.lastName",
+        "user.username as username"
+        // "payment.*"
+      )
+      .join("customer", "customer.id", "job.customerId")
+      .join("user", "user.id", "job.userId")
+      // .join("payment", "payment.id", "job.")
+      .andWhere("job.isDeleted", false)
+  );
 }
 
 async function create(job) {
