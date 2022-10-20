@@ -23,28 +23,24 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
   }
 
   try {
-    if (req.query.range) {
-      page = await JSON.parse(req.query.range)[0];
-      limit = await JSON.parse(req.query.range)[1];
-      result = result.slice(page, limit);
-    }
-    if (req.query.sort) {
-      columnName = await JSON.parse(req.query.sort)[0];
-      order = await JSON.parse(req.query.sort)[1];
-      if (order === "ASC") {
-        result = Helpers.sortAsc(result, columnName);
-      }
-      if (order === "DESC") {
-        result = Helpers.sortDesc(result, columnName);
-      }
-    }
-
+    // Search/filter
     if (req.query.filter) {
       search = await JSON.parse(req.query.filter);
 
-      if (search.id) {
-        result = result.filter((x) => search.id.includes(x.id));
+      if (!!Object.keys(search).length) {
+        if (Array.isArray(search.id)) {
+          result = result.filter((x) => {
+            return search.id.includes(x.id);
+          });
+        }
+        if (Number.isInteger(search.id)) {
+          result = result.filter((x) => search.id === x.id);
+        }
+        // Change content range to result length so pagination would have correct pages
+        contentRange = result.length;
       }
+
+      // search
       if (search.title) {
         let query = search.title.toLowerCase().trim();
 
@@ -75,6 +71,23 @@ router.get("/job", jwt.checkToken(), async (req, res) => {
           let j = x.inProgress.toLowerCase();
           return j.includes(query);
         });
+      }
+    }
+
+    // Pagination
+    if (req.query.range) {
+      page = await JSON.parse(req.query.range)[0];
+      limit = await JSON.parse(req.query.range)[1];
+      result = result.slice(page, limit);
+    }
+    if (req.query.sort) {
+      columnName = await JSON.parse(req.query.sort)[0];
+      order = await JSON.parse(req.query.sort)[1];
+      if (order === "ASC") {
+        result = Helpers.sortAsc(result, columnName);
+      }
+      if (order === "DESC") {
+        result = Helpers.sortDesc(result, columnName);
       }
     }
   } catch (error) {
