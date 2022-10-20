@@ -6,7 +6,8 @@
   "scripts": {
     "server": "nodemon index.js",
     "start": "node index.js",
-    "test": "cross-env DB_ENV=testing jest --watch --verbose --runInBand --testTimeout=10000"
+    "test": "cross-env DB_ENV=testing jest --watch --verbose --runInBand --testTimeout=10000",
+    "build": "rm -rf build && prettier --write src/ && js"
   },
   "repository": {
     "type": "git",

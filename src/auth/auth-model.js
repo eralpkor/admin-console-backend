@@ -23,7 +23,6 @@ function getUser(id) {
 }
 
 function addUser(data) {
-  console.log("whats new user ", data);
   return db("user")
     .insert(
       {
@@ -97,5 +96,5 @@ function findByEmail(email) {
 
 // DELETE user
 function deleteOne(id) {
-  return db("user").where({ id }).update({ is_deleted: true });
+  return db("user").where({ id }).update({ isDeleted: true });
 }

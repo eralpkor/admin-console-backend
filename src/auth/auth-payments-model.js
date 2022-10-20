@@ -62,6 +62,10 @@ async function create(payment) {
           balance: db.raw(`total - ${sum}`),
         })
         .transacting(trx);
+      const log = await trx("log").insert({
+        userId: payment.userId,
+        log: `New job added, id: ${ids[0].id} by user ${payment.userId}`,
+      });
     });
     return findById(ids[0].id);
   } catch (error) {

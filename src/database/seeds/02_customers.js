@@ -14,11 +14,12 @@ const createFakeCustomers = () => ({
   company: faker.company.companyName(),
   comment: faker.random.words(7),
   updatedAt: timestamp,
+  createdAt: timestamp,
 });
 
 exports.seed = async function (knex) {
   const fakeCustomers = [];
-  const desiredFakeCustomers = 20;
+  const desiredFakeCustomers = 50;
   for (let i = 0; i < desiredFakeCustomers; i++) {
     fakeCustomers.push(createFakeCustomers());
   }

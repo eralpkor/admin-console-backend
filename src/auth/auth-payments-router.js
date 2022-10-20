@@ -17,11 +17,7 @@ router.get("/payment", async (req, res) => {
   }
 
   try {
-    if (req.query.range) {
-      page = await JSON.parse(req.query.range)[0];
-      limit = await JSON.parse(req.query.range)[1];
-      result = result.slice(page, limit);
-    }
+    // Sort
     if (req.query.sort) {
       columnName = await JSON.parse(req.query.sort)[0];
       order = await JSON.parse(req.query.sort)[1];
@@ -32,23 +28,39 @@ router.get("/payment", async (req, res) => {
         result = Helpers.sortDesc(result, columnName);
       }
     }
-
+    // Search
     if (req.query.filter) {
       let query = await JSON.parse(req.query.filter);
-      if (query.jobId) {
-        result = result.filter((x) => {
-          return [query.jobId].includes(x.jobId);
-        });
+
+      if (!!Object.keys(query).length) {
+        if (Array.isArray(query.id)) {
+          result = result.filter((x) => {
+            return query.id.includes(x.id);
+          });
+        }
+        if (Number.isInteger(query.id)) {
+          result = result.filter((x) => query.id === x.id);
+        }
+        if (query.jobId) {
+          result = result.filter((x) => {
+            return [query.jobId].includes(x.jobId);
+          });
+        }
+        // Change content range to result length so pagination would have correct pages
+        contentRange = result.length;
       }
-      if (query.id) {
-        result = result.filter((x) => {
-          return query.id.includes(x.id);
-        });
-      }
+    }
+    // Pagination
+    if (req.query.range) {
+      page = await JSON.parse(req.query.range)[0];
+      limit = await JSON.parse(req.query.range)[1];
+      result = result.slice(page, limit);
     }
   } catch (error) {
     console.log("Wrong JSON ", error);
   }
+  console.log("content ", contentRange);
+  console.log("result ", result.length);
   res.setHeader(`Content-Range`, contentRange);
   res.status(200).json(result);
 });
@@ -83,7 +95,6 @@ router.put("/payment/:id", (req, res) => {
       if (ids) {
         Payments.update(id, body)
           .then((p) => {
-            console.log("whats p ", p);
             res.status(201).json(p);
           })
           .catch((err) => {

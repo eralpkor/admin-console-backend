@@ -37,7 +37,6 @@ module.exports = async (req, res, next) => {
 
   // Does user exist?
   if (!errors.length) {
-    console.log("What is email ", req.body.email);
     await Customers.findByEmail(req.body.email).then(
       (email) => email && errors.push({ email: "Email Already Exist!" })
     );
