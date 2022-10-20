@@ -15,7 +15,7 @@ var timestamp = new Date().toLocaleDateString();
 // .columns(db.raw("firstName || ' ' || lastName AS fullName"));
 
 function find() {
-  return db("customer").select();
+  return db("customer").select().where("isDeleted", false);
 }
 
 function findById(id) {
@@ -44,7 +44,6 @@ function updateCustomer(id, changes) {
 }
 
 function create(changes) {
-  console.log("add customer ", changes);
   return db("customer")
     .insert(
       {

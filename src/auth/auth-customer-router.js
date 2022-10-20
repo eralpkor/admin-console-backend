@@ -6,9 +6,10 @@ const Helpers = require("./middleware/helpers");
 
 // GET all customers
 router.get("/customer", async (req, res) => {
+  const filters = req.query;
   const role = req.decodedToken.role;
   let result = [];
-  let columnName, order, search, limit, page, contentRange;
+  let columnName, order, limit, page, contentRange;
 
   try {
     result = await Customers.find();
@@ -17,14 +18,7 @@ router.get("/customer", async (req, res) => {
     res.status(500).json({ error: "Cannot get database..." });
   }
 
-  // PAGINATION
   try {
-    if (req.query.range) {
-      page = await JSON.parse(req.query.range)[0];
-      limit = await JSON.parse(req.query.range)[1];
-      result = result.slice(page, limit);
-    }
-
     // SORT order
     if (req.query.sort) {
       columnName = await JSON.parse(req.query.sort)[0];
@@ -36,10 +30,38 @@ router.get("/customer", async (req, res) => {
         result = Helpers.sortDesc(result, columnName);
       }
     }
-
     // SEARCH
     if (req.query.filter) {
-      search = await JSON.parse(req.query.filter);
+      let search = await JSON.parse(req.query.filter);
+
+      if (!!Object.keys(search).length) {
+        if (Array.isArray(search.id)) {
+          result = result.filter((x) => {
+            return search.id.includes(x.id);
+          });
+        }
+        if (Number.isInteger(search.id)) {
+          result = result.filter((x) => search.id === x.id);
+        }
+        // Change content range to result length so pagination would have correct pages
+        contentRange = result.length;
+      }
+
+      if (search.q) {
+        let q = search.q.toLowerCase().trim();
+
+        result = result.filter((x) => {
+          let firstName = x.firstName.toLowerCase();
+          let lastName = x.lastName.toLowerCase();
+          return lastName.includes(q);
+        });
+      }
+      // PAGINATION
+      if (req.query.range) {
+        page = await JSON.parse(req.query.range)[0];
+        limit = await JSON.parse(req.query.range)[1];
+        result = result.slice(page, limit);
+      }
 
       if (search.firstName) {
         let query = search.firstName.toLowerCase().trim();
@@ -77,8 +99,8 @@ router.get("/customer", async (req, res) => {
   } catch (error) {
     console.log("Wrong JSON ", error);
   }
-  console.log("result ", result);
-
+  // console.log("content ", contentRange);
+  // console.log("result ", result.length);
   res.setHeader(`Content-Range`, contentRange);
   res.status(200).json(result);
 });
