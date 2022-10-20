@@ -19,8 +19,39 @@ router.get("/comment", async (req, res) => {
     res.status(500).json({ error: "Cannot get database..." });
   }
 
-  // PAGINATION
   try {
+    // SEARCH
+    if (req.query.filter) {
+      let query = await JSON.parse(req.query.filter);
+
+      if (!!Object.keys(query).length) {
+        if (Array.isArray(query.id)) {
+          console.log("ARRAY ", query.id);
+
+          result = result.filter((x) => {
+            return query.id.includes(x.id);
+          });
+        }
+        if (Number.isInteger(query.id)) {
+          result = result.filter((x) => query.id === x.id);
+        }
+        if (query.jobId) {
+          result = result.filter((x) => {
+            return [query.jobId].includes(x.jobId);
+          });
+        }
+        // Change content range to result length so pagination would have correct pages
+        contentRange = result.length;
+      }
+      if (query.comment) {
+        let search = query.comment.toLowerCase().trim();
+        result = result.filter((x) => {
+          let c = x.comment.toLowerCase();
+          return c.includes(search);
+        });
+      }
+    }
+    // PAGINATION
     if (req.query.range) {
       page = await JSON.parse(req.query.range)[0];
       limit = await JSON.parse(req.query.range)[1];
@@ -35,26 +66,6 @@ router.get("/comment", async (req, res) => {
       }
       if (order === "DESC") {
         result = Helpers.sortDesc(result, columnName);
-      }
-    }
-
-    // SEARCH
-    if (req.query.filter) {
-      let query = await JSON.parse(req.query.filter);
-      if (query.jobId) {
-        result = result.filter((x) => {
-          return [query.jobId].includes(x.jobId);
-        });
-      }
-      if (query.id) {
-        result = result.filter((x) => query.id.includes(x.jobId));
-      }
-      if (query.comment) {
-        let query = query.comment.toLowerCase().trim();
-        result = result.filter((x) => {
-          let c = x.comment.toLowerCase();
-          return c.includes(query);
-        });
       }
     }
   } catch (error) {
@@ -101,7 +112,7 @@ router.put("/comment/:id", (req, res) => {
   if (Object.keys(changes).length === 0) {
     res.status(422).json({ error: "Request body cannot be empty." });
   }
-
+  console.log("whats changed ", changes);
   comment
     .findById(id)
     .then((ids) => {
