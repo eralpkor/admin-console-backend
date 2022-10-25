@@ -9,6 +9,7 @@ const customerRouter = require("../auth/auth-customer-router");
 const paymentsRouter = require("../auth/auth-payments-router");
 const commentsRouter = require("../auth/auth-comments-router");
 const logsRouter = require("../auth/auth-log-router");
+const userJob = require("../auth/user-jobs-router");
 const server = express();
 
 let corsOptions = {
@@ -27,9 +28,14 @@ server.use("/api", authenticate, paymentsRouter);
 server.use("/api", authenticate, jobsRouter);
 server.use("/api", authenticate, customerRouter);
 server.use("/api", authenticate, logsRouter);
+server.use("/api", userJob);
 
+let count = 0;
 server.get("/", (req, res) => {
-  res.send("<h2>Let's cook something! 🌽🥕 😄</h2>");
+  count++;
+  res.send(
+    `<h2>Let's cook something together!!! 🌽🥕 😄</h2>Page visited ${count} times<p></p>`
+  );
 });
 
 module.exports = server;
