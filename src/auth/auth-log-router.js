@@ -12,6 +12,7 @@ router.get("/log", async (req, res) => {
 
   try {
     result = await Log.find();
+    data = await Log.find();
     contentRange = result.length;
   } catch (error) {
     res.status(500).json({ error: "Cannot get database..." });
@@ -56,7 +57,7 @@ router.get("/log", async (req, res) => {
   res.status(200).json(result);
 });
 
-// GET single payment
+// GET single Log
 router.get("/log/:id", async (req, res) => {
   const { id } = req.params;
 
