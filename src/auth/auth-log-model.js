@@ -1,4 +1,6 @@
 const db = require("../database/dbConfig");
+const User = require("./auth-model");
+const Job = require("./auth-jobs-model");
 
 module.exports = {
   find,
@@ -16,13 +18,15 @@ function findById(id) {
   return db("log").select().where({ id }).first();
 }
 
-async function create(data) {
+async function create(data, userId, jobId) {
+  const job = Job.findById(jobId);
+  const user = User.findById(userId);
   try {
     const ids = await db("log").insert(
       {
         createdAt: timestamp,
-        userId: data.userId,
-        log: data.log,
+        userId: user.id,
+        log: { ...data },
       },
       "id"
     );
