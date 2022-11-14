@@ -1,5 +1,6 @@
 const db = require("../database/dbConfig");
 const Payment = require("./auth-payments-model");
+const User = require("./auth-model");
 module.exports = {
   findMany,
   create,
@@ -42,8 +43,8 @@ async function create(job) {
           {
             title: job.title,
             description: job.description,
-            inProgress: job.inProgress,
-            dueDate: job.dueDate,
+            inProgress: job.inProgress || "OPEN",
+            dueDate: job.dueDate || timestamp,
             customerId: job.customerId,
             userId: job.userId,
             adminId: job.adminId,
@@ -51,7 +52,7 @@ async function create(job) {
             updatedAt: timestamp,
             balance: job.total - job.amountPaid,
           },
-          ["id", "userId", "adminId"]
+          ["id", "userId", "adminId", "title"]
         )
         .transacting(trx);
 
@@ -76,11 +77,11 @@ async function create(job) {
           jobId: ids[0].id,
         })
         .transacting(trx);
-
+      const user = await User.findUnique(result.adminId);
       const log = await trx("log")
         .insert({
-          userId: job.userId,
-          log: `New job with id ${ids[0].id} added by user id: ${result.adminId}`,
+          userId: job.adminId,
+          log: `New job with id ${result.id} title: "${result.title}" added by user: "${user.username}"`,
         })
         .transacting(trx);
       console.log("job saved ");
@@ -108,7 +109,7 @@ async function update(id, job) {
             total: job.total,
             updatedAt: timestamp,
           },
-          "id"
+          ["id", "userId", "adminId", "title"]
         )
         .transacting(trx);
 
@@ -128,11 +129,12 @@ async function update(id, job) {
           balance: db.raw(`job.total - ${sum}`),
         })
         .transacting(trx);
+      const user = await User.findUnique(result.adminId);
       // Log the transactions
       const log = await trx("log")
         .insert({
           userId: job.userId,
-          log: `Job with id ${ids[0].id} updated by user id: ${job.adminId}`,
+          log: `Job with id "${result.id}", title: "${result.title}" updated by user: "${user.username}"`,
         })
         .transacting(trx);
       console.log("job id? ", ids[0].id);
